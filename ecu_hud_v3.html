@@ -23,7 +23,7 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;user-select:none;-webkit-tap-highlight-color:transparent;}
 
-/* ซ่อนแถบ Scrollbar ทุกชนิดในหน้าเว็บ แต่ยังให้ไถเลื่อนได้ปกติ */
+/* ซ่อนแถบ Scrollbar แต่ยังไถเลื่อนได้ปกติ */
 ::-webkit-scrollbar { display: none; width: 0; height: 0; }
 * { scrollbar-width: none; -ms-overflow-style: none; }
 
@@ -57,7 +57,7 @@ body{
 .page{
   position:absolute; inset:0; display:none; flex-direction:column;
   padding:4px clamp(8px,2vw,16px) 8px; 
-  animation: fadeIn 0.25s ease-out;
+  animation: fadeIn 0.2s ease-out;
 }
 .page.active{display:flex;}
 
@@ -80,12 +80,9 @@ body{
   padding: 10px; width: 100%;
 }
 
-/* แก้บัคการยืดในแนวตั้ง: ล็อกสัดส่วนตายตัว */
 .dash-gauge-wrapper {
   position: relative;
-  width: 100%; 
-  height: auto; /* ให้ความสูงแปรผันตามความกว้าง */
-  aspect-ratio: 1000 / 560; /* ล็อกสัดส่วนเกจ 16:9 ให้เหมือนจริง */
+  width: 100%; height: 100%;
   margin: auto;
   container-type: inline-size; 
 }
@@ -96,44 +93,61 @@ canvas#rpmCanvas {
   pointer-events: none; z-index: 1;
 }
 
-/* ล็อกพิกัดตัวเลขให้อยู่ตรงแกนกลางพัดลมเกจเสมอ (ประมาณ 8% จากขอบล่างของกรอบ) */
 .dash-center-info {
   position: absolute; 
-  bottom: 8%; 
   left: 0; width: 100%;
-  z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  z-index: 10; display: flex; flex-direction: column; align-items: center;
 }
 .dash-speed-wrap { display:flex; align-items:baseline; gap: 1cqw; justify-content:center; }
 .dash-speed { 
   font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic; 
-  font-size: 16cqw; color:#fff; line-height:0.8; text-shadow:0 0 20px rgba(255,255,255,0.2); letter-spacing:-4px;
+  color:#fff; line-height:0.8; text-shadow:0 0 20px rgba(255,255,255,0.2); letter-spacing:-4px;
 }
-.dash-speed-unit { font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic; font-size: 3.5cqw; color:#aaa; letter-spacing:2px; }
-.dash-rpm-val { font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic; font-size: 5cqw; color:var(--accent2); letter-spacing:1px; margin-top: 2cqw; }
-.dash-rpm-unit { font-family:'Rajdhani',sans-serif; font-weight:700; font-size: 2.5cqw; color:#777; letter-spacing:4px; margin-left: 1cqw; }
-.spd-mode { font-family:'Rajdhani',sans-serif; font-size: 2.5cqw; font-weight:700; color:#555; letter-spacing:2px; margin-top: 1cqw; }
+.dash-speed-unit { font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic; color:#aaa; letter-spacing:2px; }
+.dash-rpm-val { font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic; color:var(--accent2); letter-spacing:1px; }
+.dash-rpm-unit { font-family:'Rajdhani',sans-serif; font-weight:700; color:#777; letter-spacing:4px; margin-left: 1cqw; }
+.spd-mode { font-family:'Rajdhani',sans-serif; font-weight:700; color:#555; letter-spacing:2px; }
 .spd-mode.gps{color:#00e676; text-shadow:0 0 10px rgba(0,230,118,0.5);}
 .spd-mode.est{color:#ffe066; text-shadow:0 0 10px rgba(255,224,102,0.4);}
 
+/* ─────────── CSS Layout ตามแนวตั้ง/แนวนอน ─────────── */
+@media screen and (orientation: portrait) {
+  .dash-gauge-wrapper { aspect-ratio: 1 / 1; max-width: 500px; height: auto;} /* จตุรัส 1:1 */
+  .dash-center-info { top: 50%; transform: translateY(-50%); } /* ให้อยู่กลางพอดี */
+  
+  .dash-speed { font-size: 22cqw; }
+  .dash-speed-unit { font-size: 5cqw; }
+  .dash-rpm-val { font-size: 8cqw; margin-top: 1cqw; }
+  .dash-rpm-unit { font-size: 3cqw; }
+  .spd-mode { font-size: 3cqw; margin-top: 1cqw; }
+
+  #previewCanvas { aspect-ratio: 1 / 1; max-width: 250px; } /* Preview เป็น 1:1 ด้วย */
+}
+
+@media screen and (orientation: landscape) {
+  #page-dash { flex-direction: row; align-items: stretch; }
+  .dash-screen { flex: 1.8; } 
+  .dash-bottom-cards { flex: 1; height: 100%; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); }
+  
+  .dash-gauge-wrapper { aspect-ratio: 1000 / 560; max-width: 900px; height: 100%; width: auto;} /* กว้าง 16:9 */
+  .dash-center-info { top: 18cqw; } /* ดันลงมาหลบไฟกวาด */
+  
+  .dash-speed { font-size: 16cqw; }
+  .dash-speed-unit { font-size: 3.5cqw; }
+  .dash-rpm-val { font-size: 5cqw; margin-top: 2cqw; }
+  .dash-rpm-unit { font-size: 2.5cqw; }
+  .spd-mode { font-size: 2.5cqw; margin-top: 1cqw; }
+
+  #previewCanvas { aspect-ratio: 1000 / 560; max-width: 450px; } /* Preview เป็น 16:9 ด้วย */
+}
+
+/* การ์ดสถานะ */
 .dash-bottom-cards {
   display: grid; gap: clamp(6px,1.5vw,12px); flex-shrink:0;
   grid-template-columns: repeat(2, 1fr); 
   grid-template-rows: repeat(2, 1fr);
   width: 100%;
 }
-
-/* ถ้าเป็นแนวนอน ให้ปรับโครงสร้างสลับฝั่ง */
-@media screen and (orientation: landscape) {
-  #page-dash { flex-direction: row; align-items: stretch; }
-  .dash-screen { flex: 1.8; } 
-  .dash-gauge-wrapper { width: auto; height: 100%; } /* แนวนอนให้ยึดความสูงเป็นหลัก */
-  .dash-bottom-cards { 
-    flex: 1; height: 100%;
-    grid-template-columns: repeat(2, 1fr); 
-    grid-template-rows: repeat(2, 1fr); 
-  }
-}
-
 .card {
   background:var(--panel); border-radius:4px; 
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
@@ -169,7 +183,6 @@ canvas#rpmCanvas {
 }
 .data-tile .lbl{font-size:clamp(0.55rem,1.1vw,0.72rem); letter-spacing:1px; color:#aaa; font-family:'Rajdhani',sans-serif; font-weight:700;}
 .data-tile .val{font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic; font-size:clamp(1.2rem,3.4vw,2.1rem); text-align:right; line-height:1;}
-.data-tile.link .val{font-size:clamp(1rem,2.6vw,1.5rem);}
 
 /* ─────────── DTC page ─────────── */
 #page-dtc{gap:clamp(8px,1.6vw,16px); width: 100%;}
@@ -196,7 +209,7 @@ canvas#rpmCanvas {
 .set-title{font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic; letter-spacing:2px; font-size:clamp(0.8rem,1.8vw,1rem); color:#999; margin-bottom:8px;}
 
 #previewCanvas {
-  width: 100%; max-width: 450px; height: auto; aspect-ratio: 1000 / 560; border-radius: 6px;
+  width: 100%; height: auto; border-radius: 6px;
   background: radial-gradient(circle at center top, rgba(30,30,30,0.4) 0%, var(--panel) 100%);
   border: 2px solid var(--frame); box-shadow: 0 0 20px rgba(0,0,0,0.8);
   margin: 0 auto 15px auto; display: block; object-fit: contain;
@@ -223,24 +236,28 @@ canvas#rpmCanvas {
 .mini-btn{flex:1; padding:10px; border-radius:4px; border:1px solid var(--frame); background:var(--panel); color:var(--text); font-family:'Rajdhani',sans-serif; font-weight:700; letter-spacing:1px; font-size:clamp(0.75rem,1.6vw,0.9rem); text-align:center; cursor:pointer;}
 .mini-btn.danger{color:var(--eot); border-color:rgba(255,59,48,0.5);}
 
+/* วงกลมบอกหน้า 4 จุด */
+.page-indicators {
+  position: absolute; bottom: 5px; left: 0; width: 100%; display: flex; justify-content: center; gap: 8px; z-index: 50;
+}
+.dot { width: 8px; height: 8px; border-radius: 50%; background: #555; transition: background 0.3s; }
+.dot.active { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
 </style>
 </head>
 <body>
 
 <div id="topbar">
   <div id="status-box">● TAP TO CONNECT</div>
-  <div style="font-size:0.6rem; color:#666; letter-spacing:1px;">&lt; SWIPE TO CHANGE &gt;</div>
+  <div style="font-size:0.6rem; color:#888; letter-spacing:1px;">&lt;&lt; SWIPE &gt;&gt;</div>
   <div id="gps-box">● GPS OFF<span class="sub">TAP TO FEED SPEED</span></div>
 </div>
 
 <div id="pages">
-
   <!-- DASHBOARD -->
   <div class="page active" id="page-dash">
-    <!-- จอเกจด้านบน/ซ้าย -->
     <div class="dash-screen" id="rpm-panel">
       <div class="dash-gauge-wrapper">
-        <canvas id="rpmCanvas" width="1000" height="560"></canvas>
+        <canvas id="rpmCanvas"></canvas>
         <div class="dash-center-info">
           <div class="dash-speed-wrap">
             <div id="spd-digital" class="dash-speed">0</div>
@@ -251,25 +268,11 @@ canvas#rpmCanvas {
         </div>
       </div>
     </div>
-    
-    <!-- จอสถานะด้านล่าง/ขวา -->
     <div class="dash-bottom-cards">
-      <div class="card card-tps">
-        <div class="header-title tps-txt">TPS</div><div class="header-sub">THROTTLE</div>
-        <div class="card-value-wrap"><div id="tps-val" class="card-value tps-txt">0.0</div><div class="card-unit">%</div></div>
-      </div>
-      <div class="card card-afr">
-        <div class="header-title afr-txt">AFR</div><div class="header-sub">AIR/FUEL</div>
-        <div class="card-value-wrap"><div id="afr-val" class="card-value afr-txt">0.0</div><div class="card-unit">:1</div></div>
-      </div>
-      <div class="card card-eot">
-        <div class="header-title eot-txt">EOT</div><div class="header-sub">ENGINE TEMP</div>
-        <div class="card-value-wrap"><div id="eot-val" class="card-value eot-txt">0</div><div class="card-unit">°C</div></div>
-      </div>
-      <div class="card card-bat">
-        <div class="header-title bat-txt">BAT</div><div class="header-sub">VOLTAGE</div>
-        <div class="card-value-wrap"><div id="bat-val" class="card-value bat-txt">0.0</div><div class="card-unit">V</div></div>
-      </div>
+      <div class="card card-tps"><div class="header-title tps-txt">TPS</div><div class="header-sub">THROTTLE</div><div class="card-value-wrap"><div id="tps-val" class="card-value tps-txt">0.0</div><div class="card-unit">%</div></div></div>
+      <div class="card card-afr"><div class="header-title afr-txt">AFR</div><div class="header-sub">AIR/FUEL</div><div class="card-value-wrap"><div id="afr-val" class="card-value afr-txt">0.0</div><div class="card-unit">:1</div></div></div>
+      <div class="card card-eot"><div class="header-title eot-txt">EOT</div><div class="header-sub">ENGINE TEMP</div><div class="card-value-wrap"><div id="eot-val" class="card-value eot-txt">0</div><div class="card-unit">°C</div></div></div>
+      <div class="card card-bat"><div class="header-title bat-txt">BAT</div><div class="header-sub">VOLTAGE</div><div class="card-value-wrap"><div id="bat-val" class="card-value bat-txt">0.0</div><div class="card-unit">V</div></div></div>
     </div>
   </div>
 
@@ -306,7 +309,7 @@ canvas#rpmCanvas {
   <div class="page" id="page-set">
     <div class="set-section" style="text-align:center;">
       <div class="set-title" style="margin-bottom:12px;">LIVE PREVIEW (จอตัวอย่าง)</div>
-      <canvas id="previewCanvas" width="1000" height="560"></canvas>
+      <canvas id="previewCanvas"></canvas>
     </div>
 
     <div class="set-section">
@@ -332,7 +335,11 @@ canvas#rpmCanvas {
       </div>
     </div>
   </div>
+</div>
 
+<!-- จุดไข่ปลาบอกหน้าปัจจุบัน -->
+<div class="page-indicators" id="dots">
+  <div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
 </div>
 
 <script>
@@ -343,44 +350,32 @@ document.body.addEventListener('click', function(e){
 
 // ─────────── ระบบ Swipe Navigation ───────────
 const pages = Array.from(document.querySelectorAll('.page'));
+const dots = Array.from(document.querySelectorAll('.dot'));
 let currentPageIndex = 0;
 
 function switchPage(index) {
   if (index < 0 || index >= pages.length) return;
   pages.forEach(x => x.classList.remove('active'));
+  dots.forEach(d => d.classList.remove('active'));
   pages[index].classList.add('active');
+  dots[index].classList.add('active');
   currentPageIndex = index;
-  
-  if(pages[index].id === 'page-set') {
-      drawGauge(currentRpm);
-  }
+  if(pages[index].id === 'page-set') drawGauge(currentRpm);
 }
 
-// Swipe Gestures
-let touchStartX = 0;
-let touchEndX = 0;
-const swipeThreshold = 50; 
+// Swipe Gestures Logic
+let touchStartX = 0; let touchEndX = 0; const swipeThreshold = 60; 
 const pagesContainer = document.getElementById('pages');
 
-pagesContainer.addEventListener('touchstart', e => {
-  touchStartX = e.changedTouches[0].screenX;
-}, {passive: true});
-
+pagesContainer.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
 pagesContainer.addEventListener('touchend', e => {
   touchEndX = e.changedTouches[0].screenX;
-  handleSwipe();
-}, {passive: true});
-
-function handleSwipe() {
   const diff = touchStartX - touchEndX; 
-  if (Math.abs(diff) < swipeThreshold) return; 
-
-  if (diff > 0) {
-    switchPage(currentPageIndex + 1);
-  } else {
-    switchPage(currentPageIndex - 1);
+  if (Math.abs(diff) > swipeThreshold) {
+    if (diff > 0) switchPage(currentPageIndex + 1); // ปัดซ้าย
+    else switchPage(currentPageIndex - 1); // ปัดขวา
   }
-}
+}, {passive: true});
 
 // ─────────── DOM refs ───────────
 const el = {
@@ -400,7 +395,7 @@ const el = {
 };
 function setText(node, txt){ if (node.__t !== txt) { node.__t = txt; node.textContent = txt; } }
 
-// ─────────── 6 STYLES GAUGE SYSTEM ───────────
+// ─────────── 6 STYLES GAUGE SYSTEM (AUTO RESIZE) ───────────
 const canvas = document.getElementById('rpmCanvas'); 
 const ctx = canvas.getContext('2d');
 const prevCanvas = document.getElementById('previewCanvas');
@@ -411,27 +406,48 @@ const rpmPanel = document.getElementById('rpm-panel');
 let targetRpm=0, currentRpm=0;
 let currentThemeAccent = '#00e5ff';
 
-const cvsW = 1000, cvsH = 560;
-const arcCx = cvsW / 2;
-const arcCy = 520; 
-const arcR = 440; 
-const startAng = Math.PI * 1.15;
-const endAng = Math.PI * 1.85;
-const totalAng = endAng - startAng;
+let cvsW, cvsH, arcCx, arcCy, arcR, startAng, endAng, totalAng;
+let isPortrait = false;
+
+// ฟังก์ชันอัปเดตสัดส่วนจอ (วาดวงกลมเมื่อแนวตั้ง วาดโค้งเมื่อแนวนอน)
+function updateCanvasSize() {
+  isPortrait = window.innerHeight > window.innerWidth;
+  
+  if (isPortrait) {
+    // แนวตั้ง: วาดเป็นเกือบเต็มวงกลม
+    cvsW = 800; cvsH = 800;
+    arcCx = 400; arcCy = 400; arcR = 300; 
+    startAng = Math.PI * 0.75; endAng = Math.PI * 2.25;
+  } else {
+    // แนวนอน: วาดเป็นส่วนโค้งด้านบน
+    cvsW = 1000; cvsH = 560;
+    arcCx = 500; arcCy = 520; arcR = 440; 
+    startAng = Math.PI * 1.15; endAng = Math.PI * 1.85;
+  }
+  totalAng = endAng - startAng;
+  
+  canvas.width = cvsW; canvas.height = cvsH;
+  prevCanvas.width = cvsW; prevCanvas.height = cvsH;
+  drawGauge(currentRpm);
+}
+window.addEventListener('resize', updateCanvasSize);
+updateCanvasSize();
 
 /* 1. SUPERBIKE */
 function drawSuperbikeArc(rpm) {
-  ctx.beginPath(); ctx.arc(arcCx, arcCy, arcR, startAng, endAng);
-  ctx.lineWidth = 40; ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.stroke();
+  let r = arcR;
+  ctx.beginPath(); ctx.arc(arcCx, arcCy, r, startAng, endAng);
+  ctx.lineWidth = isPortrait ? 30 : 40; ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.stroke();
 
   for(let i=0; i<=120; i++){
     if(i%10===0) {
        let a = startAng + (i/120)*totalAng;
        let color = i>=100 ? '#ff3b30' : '#fff';
-       ctx.beginPath(); ctx.moveTo(arcCx + Math.cos(a)*(arcR-30), arcCy + Math.sin(a)*(arcR-30)); ctx.lineTo(arcCx + Math.cos(a)*(arcR+30), arcCy + Math.sin(a)*(arcR+30));
+       let tickL = isPortrait ? 20 : 30;
+       ctx.beginPath(); ctx.moveTo(arcCx + Math.cos(a)*(r-tickL), arcCy + Math.sin(a)*(r-tickL)); ctx.lineTo(arcCx + Math.cos(a)*(r+tickL), arcCy + Math.sin(a)*(r+tickL));
        ctx.strokeStyle = color; ctx.lineWidth = 4; ctx.stroke();
-       let txtR = arcR - 60;
-       ctx.fillStyle = color; ctx.font = "italic bold 36px Rajdhani"; ctx.textAlign="center"; ctx.textBaseline="middle";
+       let txtR = r - (isPortrait ? 50 : 60);
+       ctx.fillStyle = color; ctx.font = "italic bold "+(isPortrait?30:36)+"px Rajdhani"; ctx.textAlign="center"; ctx.textBaseline="middle";
        ctx.fillText(i/10, arcCx + Math.cos(a)*txtR, arcCy + Math.sin(a)*txtR);
     }
   }
@@ -439,7 +455,7 @@ function drawSuperbikeArc(rpm) {
   let rpmCap = Math.min(Math.max(rpm,0),maxRpm); let activeBlocks = Math.floor((rpmCap/maxRpm)*60);
   for(let b=0; b<60; b++){
     let bS = startAng + (b/60)*totalAng; let bE = startAng + ((b+0.8)/60)*totalAng;
-    ctx.beginPath(); ctx.arc(arcCx, arcCy, arcR, bS, bE); ctx.lineWidth = 40;
+    ctx.beginPath(); ctx.arc(arcCx, arcCy, r, bS, bE); ctx.lineWidth = isPortrait ? 30 : 40;
     if(b < activeBlocks){
       let isRed = (b/60) >= (redline/maxRpm); let isYellow = (b/60) >= ((redline-2000)/maxRpm);
       ctx.strokeStyle = isRed ? '#ff3b30' : (isYellow ? '#ffe066' : currentThemeAccent);
@@ -449,45 +465,64 @@ function drawSuperbikeArc(rpm) {
   }
 }
 
-/* 2. CYBER BAR */
+/* 2. CYBER BAR (ถ้าเป็นแนวตั้งจะแปลงร่างเป็นวงกลมล้ำๆ อัตโนมัติ) */
 function drawCyberBar(rpm) {
-  let pad = 100; let sx = pad; let w = cvsW - (pad*2); let sy = 400; let h = 60; let skew = 50;
-  ctx.fillStyle = 'rgba(255,255,255,0.05)';
-  ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx+w, sy); ctx.lineTo(sx+w+skew, sy-h); ctx.lineTo(sx+skew, sy-h); ctx.fill();
-
-  let fillW = (Math.min(Math.max(rpm,0),maxRpm)/maxRpm)*w;
-  if(fillW > 0){
-     ctx.fillStyle = rpm >= redline ? '#ff3b30' : currentThemeAccent;
-     ctx.shadowBlur = 30; ctx.shadowColor = ctx.fillStyle;
-     ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx+fillW, sy); ctx.lineTo(sx+fillW+skew, sy-h); ctx.lineTo(sx+skew, sy-h); ctx.fill();
-  }
-  ctx.shadowBlur = 0;
-  for(let i=0; i<=120; i++){
-    if(i%10===0) {
-      let tx = sx + (i/120)*w; let color = i>=100 ? '#ff3b30' : '#fff';
-      ctx.fillStyle = color; ctx.font = "italic bold 32px Rajdhani"; ctx.textAlign="center";
-      ctx.fillText(i/10, tx + (skew/2), sy + 45);
-      ctx.fillRect(tx + (skew/2) - 2, sy + 5, 4, 12);
+  if (isPortrait) {
+    let r = arcR;
+    ctx.beginPath(); ctx.arc(arcCx, arcCy, r, startAng, endAng);
+    ctx.lineWidth = 40; ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.stroke();
+    let fillAng = startAng + (Math.min(Math.max(rpm,0),maxRpm)/maxRpm)*totalAng;
+    if(rpm > 0) {
+       ctx.beginPath(); ctx.arc(arcCx, arcCy, r, startAng, fillAng);
+       ctx.lineWidth = 40; ctx.strokeStyle = rpm >= redline ? '#ff3b30' : currentThemeAccent;
+       ctx.shadowBlur = 30; ctx.shadowColor = ctx.strokeStyle; ctx.stroke(); ctx.shadowBlur = 0;
+    }
+    for(let i=0; i<=120; i++){
+      if(i%10===0) {
+        let a = startAng + (i/120)*totalAng; let color = i>=100 ? '#ff3b30' : '#fff';
+        ctx.fillStyle = color; ctx.font = "italic bold 32px Rajdhani"; ctx.textAlign="center"; ctx.textBaseline="middle";
+        ctx.fillText(i/10, arcCx + Math.cos(a)*(r-55), arcCy + Math.sin(a)*(r-55));
+        ctx.beginPath(); ctx.moveTo(arcCx + Math.cos(a)*(r-20), arcCy + Math.sin(a)*(r-20)); ctx.lineTo(arcCx + Math.cos(a)*(r+20), arcCy + Math.sin(a)*(r+20));
+        ctx.strokeStyle=color; ctx.lineWidth=3; ctx.stroke();
+      }
+    }
+  } else {
+    // แนวนอนวาดเป็นบาร์
+    let pad = 100; let sx = pad; let w = cvsW - (pad*2); let sy = 400; let h = 60; let skew = 50;
+    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx+w, sy); ctx.lineTo(sx+w+skew, sy-h); ctx.lineTo(sx+skew, sy-h); ctx.fill();
+    let fillW = (Math.min(Math.max(rpm,0),maxRpm)/maxRpm)*w;
+    if(fillW > 0){
+       ctx.fillStyle = rpm >= redline ? '#ff3b30' : currentThemeAccent; ctx.shadowBlur = 30; ctx.shadowColor = ctx.fillStyle;
+       ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx+fillW, sy); ctx.lineTo(sx+fillW+skew, sy-h); ctx.lineTo(sx+skew, sy-h); ctx.fill();
+    }
+    ctx.shadowBlur = 0;
+    for(let i=0; i<=120; i++){
+      if(i%10===0) {
+        let tx = sx + (i/120)*w; let color = i>=100 ? '#ff3b30' : '#fff';
+        ctx.fillStyle = color; ctx.font = "italic bold 32px Rajdhani"; ctx.textAlign="center"; ctx.fillText(i/10, tx + (skew/2), sy + 45);
+        ctx.fillRect(tx + (skew/2) - 2, sy + 5, 4, 12);
+      }
     }
   }
 }
 
 /* 3. HUD ARC */
 function drawHudArc(rpm) {
-  let r = 400; let sa = Math.PI * 1.2; let ea = Math.PI * 1.8; let ta = ea - sa;
+  let r = isPortrait ? arcR - 20 : 400; 
 
-  ctx.beginPath(); ctx.arc(arcCx, arcCy, r, sa, ea);
+  ctx.beginPath(); ctx.arc(arcCx, arcCy, r, startAng, endAng);
   ctx.lineWidth = 15; ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.stroke();
   
-  let fillAng = sa + (Math.min(Math.max(rpm,0),maxRpm)/maxRpm)*ta;
+  let fillAng = startAng + (Math.min(Math.max(rpm,0),maxRpm)/maxRpm)*totalAng;
   if(rpm > 0) {
-    ctx.beginPath(); ctx.arc(arcCx, arcCy, r, sa, fillAng);
+    ctx.beginPath(); ctx.arc(arcCx, arcCy, r, startAng, fillAng);
     ctx.lineWidth = 15; ctx.strokeStyle = rpm >= redline ? '#ff3b30' : currentThemeAccent;
     ctx.shadowBlur = 20; ctx.shadowColor = ctx.strokeStyle;
     ctx.stroke(); ctx.shadowBlur = 0;
   }
   for(let i=0; i<=120; i+=10){
-    let a = sa + (i/120)*ta; let color = i>=100 ? '#ff3b30' : '#fff';
+    let a = startAng + (i/120)*totalAng; let color = i>=100 ? '#ff3b30' : '#fff';
     ctx.beginPath(); ctx.moveTo(arcCx + Math.cos(a)*(r-15), arcCy + Math.sin(a)*(r-15)); ctx.lineTo(arcCx + Math.cos(a)*(r+15), arcCy + Math.sin(a)*(r+15));
     ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.stroke();
     ctx.fillStyle = color; ctx.font = "italic bold 32px Rajdhani"; ctx.textAlign="center"; ctx.textBaseline="middle";
@@ -498,17 +533,17 @@ function drawHudArc(rpm) {
 /* 4. F1 HYBRID */
 function drawF1Hybrid(rpm) {
   let rpmCap = Math.min(Math.max(rpm,0),maxRpm);
-  let r = 380; let sa = Math.PI * 1.2; let ea = Math.PI * 1.8; let ta = ea - sa;
+  let r = isPortrait ? arcR - 40 : 380; 
 
-  ctx.beginPath(); ctx.arc(arcCx, arcCy, r, sa, ea);
+  ctx.beginPath(); ctx.arc(arcCx, arcCy, r, startAng, endAng);
   ctx.lineWidth = 8; ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.stroke();
-  let fillAng = sa + (rpmCap/maxRpm)*ta;
+  let fillAng = startAng + (rpmCap/maxRpm)*totalAng;
   if(rpm > 0) {
-      ctx.beginPath(); ctx.arc(arcCx, arcCy, r, sa, fillAng);
+      ctx.beginPath(); ctx.arc(arcCx, arcCy, r, startAng, fillAng);
       ctx.lineWidth = 12; ctx.strokeStyle = rpm >= redline ? '#ff3b30' : currentThemeAccent; ctx.stroke();
   }
 
-  let barW = 600; let barX = 200; let barY = 60;
+  let barW = isPortrait ? 500 : 600; let barX = (cvsW - barW) / 2; let barY = isPortrait ? arcCy - arcR + 20 : 60;
   for(let i=0; i<15; i++) {
       ctx.beginPath(); ctx.rect(barX + i*(barW/15) + 4, barY, (barW/15)-8, 16);
       if ((rpmCap/maxRpm) > (i/15)) {
@@ -520,7 +555,7 @@ function drawF1Hybrid(rpm) {
   }
   ctx.shadowBlur = 0;
   for(let i=0; i<=120; i+=20){
-      let a = sa + (i/120)*ta; let color = i>=100 ? '#ff3b30' : '#fff';
+      let a = startAng + (i/120)*totalAng; let color = i>=100 ? '#ff3b30' : '#fff';
       ctx.fillStyle = color; ctx.font = "italic bold 28px Rajdhani"; ctx.textAlign="center"; ctx.textBaseline="middle";
       ctx.fillText(i/10, arcCx + Math.cos(a)*(r-40), arcCy + Math.sin(a)*(r-40));
   }
@@ -528,17 +563,17 @@ function drawF1Hybrid(rpm) {
 
 /* 5. NEON PULSE */
 function drawNeonPulse(rpm) {
-  let r = 400; let sa = Math.PI * 1.2; let ea = Math.PI * 1.8; let ta = ea - sa;
-  let rpmCap = Math.min(Math.max(rpm,0),maxRpm); let fillAng = sa + (rpmCap/maxRpm)*ta;
+  let r = isPortrait ? arcR - 20 : 400; 
+  let rpmCap = Math.min(Math.max(rpm,0),maxRpm); let fillAng = startAng + (rpmCap/maxRpm)*totalAng;
 
-  ctx.beginPath(); ctx.arc(arcCx, arcCy, r, sa, ea);
+  ctx.beginPath(); ctx.arc(arcCx, arcCy, r, startAng, endAng);
   ctx.lineWidth = 30; ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.stroke();
 
   if (rpm > 0) {
-      let grad = ctx.createLinearGradient(arcCx + Math.cos(sa)*r, arcCy + Math.sin(sa)*r, arcCx + Math.cos(ea)*r, arcCy + Math.sin(ea)*r);
+      let grad = ctx.createLinearGradient(arcCx + Math.cos(startAng)*r, arcCy + Math.sin(startAng)*r, arcCx + Math.cos(endAng)*r, arcCy + Math.sin(endAng)*r);
       grad.addColorStop(0, currentThemeAccent); grad.addColorStop(1, rpm >= redline ? '#ff3b30' : currentThemeAccent);
 
-      ctx.beginPath(); ctx.arc(arcCx, arcCy, r, sa, fillAng);
+      ctx.beginPath(); ctx.arc(arcCx, arcCy, r, startAng, fillAng);
       ctx.lineCap = "round"; ctx.lineWidth = 26; ctx.strokeStyle = rpm >= redline ? '#ff3b30' : currentThemeAccent;
       ctx.shadowBlur = 40; ctx.shadowColor = ctx.strokeStyle; ctx.stroke();
 
@@ -548,7 +583,7 @@ function drawNeonPulse(rpm) {
   ctx.lineCap = "butt"; ctx.shadowBlur = 0;
   
   for(let i=0; i<=120; i+=10){
-      let a = sa + (i/120)*ta; let color = i>=100 ? '#ff3b30' : '#fff';
+      let a = startAng + (i/120)*totalAng; let color = i>=100 ? '#ff3b30' : '#fff';
       ctx.fillStyle = color; ctx.font = "bold 26px Rajdhani"; ctx.textAlign="center"; ctx.textBaseline="middle";
       ctx.fillText(i/10, arcCx + Math.cos(a)*(r+45), arcCy + Math.sin(a)*(r+45));
   }
@@ -557,7 +592,7 @@ function drawNeonPulse(rpm) {
 /* 6. MECHA CORE */
 function drawMechaCore(rpm) {
   let rpmCap = Math.min(Math.max(rpm,0),maxRpm);
-  let r = 400;
+  let r = arcR;
 
   for (let i = 0; i < 35; i++) {
       let a = startAng + (i/35)*totalAng;
@@ -967,7 +1002,6 @@ gpsBox.addEventListener('click', (e)=>{
   if (gpsSending){ startGpsWatch(); setGpsStatus('● GPS ...', true); } else { stopGpsWatch(); setGpsStatus('● GPS OFF', false); }
 });
 
-window.addEventListener('load', tryAutoConnect);
 </script>
 </body>
 </html>
