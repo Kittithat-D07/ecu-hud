@@ -297,8 +297,10 @@
             e.stopPropagation();
             if (!navigator.geolocation) { setGpsStatus('● NO GPS SUPPORT', false); return; }
             gpsSending = !gpsSending;
+            // แก้: เดิมกดปิดแล้ว watchPosition (high-accuracy) ยังทำงานต่อเนื่องอยู่เบื้องหลัง
+            // กินแบต/เปิดวิทยุ GPS ทิ้งไว้ทั้งที่ไม่ได้ส่งข้อมูลแล้ว จึงต้อง stopGpsWatch() ด้วย
             if (gpsSending) { startGpsWatch(); setGpsStatus('● GPS ...', true); }
-            else { setGpsStatus('● GPS OFF', false); }
+            else { stopGpsWatch(); setGpsStatus('● GPS OFF', false); }
         });
     </script>
 </body>
