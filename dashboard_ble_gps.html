@@ -1,401 +1,659 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ECU Smooth HUD 12K (BLE) v2</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&family=Rajdhani:wght@500;700&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
-        body { background-color: #000; background-image: linear-gradient(45deg, #0a0a0a 25%, transparent 25%, transparent 75%, #0a0a0a 75%, #0a0a0a), linear-gradient(45deg, #0a0a0a 25%, transparent 25%, transparent 75%, #0a0a0a 75%, #0a0a0a); background-size: 40px 40px; background-position: 0 0, 20px 20px; color: #fff; font-family: 'Kanit', sans-serif; height: 100vh; width: 100vw; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 10px; }
-        .dashboard { width: 100%; height: 100%; max-width: 950px; display: flex; gap: 15px; }
-        .left-panel { flex: 1.3; background: radial-gradient(circle at center, rgba(0, 229, 255, 0.15) 0%, rgba(213, 0, 249, 0.05) 40%, rgba(10, 10, 12, 0.95) 70%); border: 1px solid rgba(100, 100, 100, 0.3); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; box-shadow: inset 0 0 40px rgba(0,0,0,1); backdrop-filter: blur(8px); transition: all 0.2s ease-out; }
-        canvas { width: 100%; max-width: 360px; aspect-ratio: 1 / 1; }
-        .rpm-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; width: 100%; }
-        .rpm-center .val { font-family: 'Rajdhani', sans-serif; font-size: 5rem; font-weight: 700; color: #fff; line-height: 0.9; text-shadow: 0 0 15px rgba(0, 229, 255, 0.6); letter-spacing: -2px; }
-        .rpm-center .unit { font-size: 1.2rem; color: #aaa; font-weight: 700; letter-spacing: 4px; margin-top: 5px; }
-        .rpm-center .spd { font-family: 'Rajdhani', sans-serif; font-size: 1.4rem; font-weight: 700; color: #555; letter-spacing: 2px; margin-top: 8px; }
-        .rpm-center .spd.gps { color: #00e676; text-shadow: 0 0 10px rgba(0, 230, 118, 0.5); }
-        .rpm-center .spd.est { color: #ffe066; text-shadow: 0 0 10px rgba(255, 224, 102, 0.4); }
-        .right-panel { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 15px; }
-        .card { background: rgba(15, 15, 15, 0.9); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: inset 0 0 20px rgba(0,0,0,0.8); backdrop-filter: blur(4px); }
-        .card-header-box { padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
-        .card-body { padding: 10px 15px 15px 15px; display: flex; justify-content: space-between; align-items: flex-end; flex-grow: 1; }
-        .card-tps { border: 1px solid rgba(255, 152, 0, 0.4); border-left: 4px solid #ff9800; } .card-tps .card-header-box { background: rgba(255, 152, 0, 0.2); border-top: 3px solid #ff9800; }
-        .card-afr { border: 1px solid rgba(0, 229, 255, 0.4); border-left: 4px solid #00e5ff; } .card-afr .card-header-box { background: rgba(0, 229, 255, 0.2); border-top: 3px solid #00e5ff; }
-        .card-eot { border: 1px solid rgba(255, 59, 48, 0.4); border-left: 4px solid #ff3b30; } .card-eot .card-header-box { background: rgba(255, 59, 48, 0.2); border-top: 3px solid #ff3b30; }
-        .card-bat { border: 1px solid rgba(0, 230, 118, 0.4); border-left: 4px solid #00e676; } .card-bat .card-header-box { background: rgba(0, 230, 118, 0.2); border-top: 3px solid #00e676; }
-        .header-title { font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 1.2rem; letter-spacing: 2px; }
-        .tps-txt { color: #ff9800; } .afr-txt { color: #00e5ff; } .eot-txt { color: #ff3b30; } .bat-txt { color: #00e676; }
-        .header-sub { color: #ccc; font-size: 0.7rem; }
-        .card-value { font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 3.5rem; line-height: 0.8; text-shadow: 0 0 10px rgba(0,0,0,0.8); }
-        .card-unit { color: #888; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 1.1rem; padding-bottom: 4px; }
-        #status-box { position: absolute; top: 15px; left: 15px; font-family: 'Rajdhani', sans-serif; font-size: 1rem; color: #ff3b30; font-weight: bold; letter-spacing: 2px; z-index: 10; cursor: pointer; }
-        #status-box.connected { cursor: default; }
-        #gps-box { position: absolute; top: 15px; right: 15px; font-family: 'Rajdhani', sans-serif; font-size: 1rem; color: #666; font-weight: bold; letter-spacing: 2px; z-index: 10; cursor: pointer; text-align: right; }
-        #gps-box.sending { color: #d500f9; }
-        #gps-box .sub { display: block; font-size: 0.6rem; color: #777; letter-spacing: 1px; font-weight: 500; margin-top: 2px; }
-        @media screen and (orientation: portrait) { .dashboard { flex-direction: column; } .left-panel { flex: 1.2; padding: 10px; } .right-panel { flex: 1; gap: 10px; } canvas { max-width: 280px; } .rpm-center .val { font-size: 4rem; } .card-value { font-size: 3rem; } .rpm-center .spd { font-size: 1.1rem; } }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>ECU Smooth HUD 12K (BLE) v3</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&family=Rajdhani:wght@500;700&display=swap');
+
+:root{
+  --bg:#000000;
+  --bg-check:#0a0a0a;
+  --panel:rgba(15,15,15,0.9);
+  --frame:rgba(100,100,100,0.3);
+  --text:#ffffff;
+  --inactive:#666666;
+  --accent:#00e5ff;
+  --accent2:#d500f9;
+  --tps:#ff9800;
+  --afr:#00e5ff;
+  --eot:#ff3b30;
+  --bat:#00e676;
+}
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  background-color:var(--bg);
+  background-image:linear-gradient(45deg,var(--bg-check) 25%,transparent 25%,transparent 75%,var(--bg-check) 75%,var(--bg-check)),
+                    linear-gradient(45deg,var(--bg-check) 25%,transparent 25%,transparent 75%,var(--bg-check) 75%,var(--bg-check));
+  background-size:40px 40px; background-position:0 0,20px 20px;
+  color:var(--text); font-family:'Kanit',sans-serif;
+  height:100dvh; width:100dvw; overflow:hidden;
+  display:flex; flex-direction:column;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* ─────────── Top status bar ─────────── */
+#topbar{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:6px clamp(8px,2vw,16px); flex-shrink:0; z-index:20;
+  font-family:'Rajdhani',sans-serif; font-weight:700; letter-spacing:1px;
+}
+#status-box{font-size:clamp(0.7rem,1.6vw,0.95rem); color:#ff3b30; cursor:pointer;}
+#status-box.connected{cursor:default;}
+#gps-box{font-size:clamp(0.7rem,1.6vw,0.95rem); color:#666; cursor:pointer; text-align:right;}
+#gps-box.sending{color:var(--accent2);}
+#gps-box .sub{display:block; font-size:0.6rem; color:#777; letter-spacing:1px; font-weight:500; margin-top:1px;}
+
+/* ─────────── Page container ─────────── */
+#pages{flex:1; min-height:0; position:relative;}
+.page{
+  position:absolute; inset:0; display:none;
+  padding:4px clamp(8px,2vw,16px) 4px;
+}
+.page.active{display:flex; flex-direction:column;}
+
+/* ─────────── DASHBOARD ─────────── */
+#page-dash{flex-direction:row; gap:clamp(8px,1.5vw,15px);}
+.left-panel{
+  flex:1.3; background:radial-gradient(circle at center, rgba(0,229,255,0.15) 0%, rgba(213,0,249,0.05) 40%, rgba(10,10,12,0.95) 70%);
+  border:1px solid var(--frame); border-radius:12px;
+  display:flex; align-items:center; justify-content:center; position:relative;
+  box-shadow:inset 0 0 40px rgba(0,0,0,1); backdrop-filter:blur(8px);
+  transition:box-shadow 0.2s ease-out, background 0.2s ease-out; min-width:0; min-height:0;
+}
+canvas#rpmCanvas{width:100%; height:100%; max-width:min(60vh,60vw,420px); max-height:min(60vh,60vw,420px); aspect-ratio:1/1;}
+.rpm-center{position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; width:100%; pointer-events:none;}
+.rpm-center .val{font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(2.2rem,8vw,5rem); color:#fff; line-height:0.9; text-shadow:0 0 15px rgba(0,229,255,0.6); letter-spacing:-2px;}
+.rpm-center .unit{font-size:clamp(0.7rem,1.6vw,1.2rem); color:#aaa; font-weight:700; letter-spacing:4px; margin-top:5px;}
+.rpm-center .spd{font-family:'Rajdhani',sans-serif; font-size:clamp(0.9rem,2.2vw,1.4rem); font-weight:700; color:#555; letter-spacing:2px; margin-top:8px;}
+.rpm-center .spd.gps{color:#00e676; text-shadow:0 0 10px rgba(0,230,118,0.5);}
+.rpm-center .spd.est{color:#ffe066; text-shadow:0 0 10px rgba(255,224,102,0.4);}
+
+.right-panel{flex:1; display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; gap:clamp(6px,1.5vw,15px); min-width:0; min-height:0;}
+.card{background:var(--panel); border-radius:12px; display:flex; flex-direction:column; overflow:hidden; box-shadow:inset 0 0 20px rgba(0,0,0,0.8); backdrop-filter:blur(4px);}
+.card-header-box{padding:clamp(4px,1vw,8px) clamp(6px,1.5vw,12px); display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1);}
+.card-body{padding:clamp(4px,1vw,10px) clamp(8px,1.5vw,15px) clamp(6px,1.5vw,15px); display:flex; justify-content:space-between; align-items:flex-end; flex-grow:1;}
+.card-tps{border:1px solid rgba(255,152,0,0.4); border-left:4px solid var(--tps);} .card-tps .card-header-box{background:rgba(255,152,0,0.2); border-top:3px solid var(--tps);}
+.card-afr{border:1px solid rgba(0,229,255,0.4); border-left:4px solid var(--afr);} .card-afr .card-header-box{background:rgba(0,229,255,0.2); border-top:3px solid var(--afr);}
+.card-eot{border:1px solid rgba(255,59,48,0.4); border-left:4px solid var(--eot);} .card-eot .card-header-box{background:rgba(255,59,48,0.2); border-top:3px solid var(--eot);}
+.card-bat{border:1px solid rgba(0,230,118,0.4); border-left:4px solid var(--bat);} .card-bat .card-header-box{background:rgba(0,230,118,0.2); border-top:3px solid var(--bat);}
+.header-title{font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(0.85rem,2vw,1.2rem); letter-spacing:2px;}
+.tps-txt{color:var(--tps);} .afr-txt{color:var(--afr);} .eot-txt{color:var(--eot);} .bat-txt{color:var(--bat);}
+.header-sub{color:#ccc; font-size:clamp(0.55rem,1.2vw,0.7rem);}
+.card-value{font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(1.8rem,6vw,3.5rem); line-height:0.8; text-shadow:0 0 10px rgba(0,0,0,0.8);}
+.card-unit{color:#888; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(0.7rem,1.6vw,1.1rem); padding-bottom:4px;}
+
+@media screen and (orientation:portrait){
+  #page-dash{flex-direction:column;}
+  canvas#rpmCanvas{max-width:min(55vw,42vh,320px); max-height:min(55vw,42vh,320px);}
+}
+
+/* ─────────── ALL DATA page ─────────── */
+#page-data{align-items:stretch;}
+.data-grid{flex:1; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(4,1fr); gap:clamp(6px,1.2vw,12px); min-height:0;}
+.data-tile{background:var(--panel); border:1px solid var(--frame); border-radius:10px; padding:clamp(6px,1.2vw,10px) clamp(8px,1.5vw,14px); display:flex; flex-direction:column; justify-content:space-between; min-width:0; min-height:0;}
+.data-tile .lbl{font-size:clamp(0.55rem,1.1vw,0.72rem); letter-spacing:1px; color:#888; font-family:'Rajdhani',sans-serif; font-weight:700;}
+.data-tile .val{font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(1.2rem,3.4vw,2.1rem); text-align:right; line-height:1;}
+.data-tile.link .val{font-size:clamp(1rem,2.6vw,1.5rem);}
+
+/* ─────────── DTC page ─────────── */
+#page-dtc{align-items:stretch; gap:clamp(8px,1.6vw,16px);}
+.dtc-btns{display:flex; gap:clamp(8px,1.6vw,16px); flex-shrink:0;}
+.dtc-btn{
+  flex:1; padding:clamp(12px,2.6vw,20px) 8px; border-radius:10px; border:2px solid var(--accent);
+  background:rgba(0,229,255,0.08); color:var(--accent); font-family:'Rajdhani',sans-serif; font-weight:700;
+  font-size:clamp(0.9rem,2.2vw,1.25rem); letter-spacing:2px; text-align:center; cursor:pointer;
+  transition:background 0.15s, transform 0.1s;
+}
+.dtc-btn:active{transform:scale(0.97);}
+.dtc-btn.danger{border-color:var(--eot); color:var(--eot); background:rgba(255,59,48,0.08);}
+.dtc-btn.armed{background:rgba(255,59,48,0.35); box-shadow:0 0 20px rgba(255,59,48,0.5);}
+.dtc-result{flex:1; background:var(--panel); border:1px solid var(--frame); border-radius:10px; padding:clamp(10px,2vw,18px); overflow:auto; min-height:0;}
+.dtc-status{font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(1rem,2.6vw,1.5rem); letter-spacing:1px; margin-bottom:10px;}
+.dtc-status.ok{color:var(--bat);} .dtc-status.warn{color:#ffe066;} .dtc-status.err{color:var(--eot);}
+.dtc-hex{font-family:'Rajdhani',monospace; font-size:clamp(0.75rem,1.6vw,1rem); color:var(--accent); letter-spacing:1px; word-break:break-all; line-height:1.6;}
+.dtc-hex:empty::before{content:'—'; color:#555;}
+
+/* ─────────── SETTINGS page ─────────── */
+#page-set{align-items:stretch; overflow-y:auto;}
+.set-section{margin-bottom:clamp(14px,2.6vw,22px);}
+.set-title{font-family:'Rajdhani',sans-serif; font-weight:700; letter-spacing:2px; font-size:clamp(0.8rem,1.8vw,1rem); color:#999; margin-bottom:8px;}
+.theme-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(100px,1fr)); gap:clamp(6px,1.2vw,10px);}
+.theme-swatch{
+  border-radius:8px; padding:clamp(10px,2vw,16px) 6px; text-align:center; cursor:pointer;
+  font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(0.7rem,1.5vw,0.85rem); letter-spacing:1px;
+  border:2px solid transparent; transition:transform 0.1s;
+}
+.theme-swatch:active{transform:scale(0.96);}
+.theme-swatch.active{border-color:#fff; box-shadow:0 0 12px rgba(255,255,255,0.4);}
+.toggle-row{display:flex; align-items:center; justify-content:space-between; background:var(--panel); border:1px solid var(--frame); border-radius:10px; padding:clamp(10px,2vw,14px) clamp(12px,2vw,16px); margin-bottom:8px;}
+.toggle-row .lbl{font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(0.85rem,1.8vw,1rem);}
+.toggle-row .sub{font-size:clamp(0.6rem,1.2vw,0.72rem); color:#888; margin-top:2px;}
+.switch{width:46px; height:26px; border-radius:13px; background:#333; position:relative; flex-shrink:0; cursor:pointer; transition:background 0.15s;}
+.switch.on{background:var(--accent);}
+.switch::after{content:''; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:#fff; transition:left 0.15s;}
+.switch.on::after{left:23px;}
+.btn-row{display:flex; gap:8px;}
+.mini-btn{flex:1; padding:10px; border-radius:8px; border:1px solid var(--frame); background:var(--panel); color:var(--text); font-family:'Rajdhani',sans-serif; font-weight:700; letter-spacing:1px; font-size:clamp(0.75rem,1.6vw,0.9rem); text-align:center; cursor:pointer;}
+.mini-btn.danger{color:var(--eot); border-color:rgba(255,59,48,0.5);}
+
+/* ─────────── Bottom tab bar ─────────── */
+#tabbar{
+  display:flex; flex-shrink:0; border-top:1px solid var(--frame);
+  background:rgba(10,10,10,0.85); backdrop-filter:blur(6px); z-index:20;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.tab-btn{
+  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  padding:clamp(6px,1.4vw,10px) 4px; color:#666; font-family:'Rajdhani',sans-serif; font-weight:700;
+  font-size:clamp(0.6rem,1.4vw,0.78rem); letter-spacing:1px; cursor:pointer; border-top:2px solid transparent;
+  transition:color 0.15s, border-color 0.15s;
+}
+.tab-btn svg{width:clamp(16px,3.4vw,22px); height:clamp(16px,3.4vw,22px); fill:none; stroke:currentColor; stroke-width:2;}
+.tab-btn.active{color:var(--accent); border-top-color:var(--accent);}
+</style>
 </head>
 <body>
-    <div class="dashboard">
-        <div class="left-panel" id="rpm-panel">
-            <div id="status-box">● TAP TO CONNECT</div>
-            <div id="gps-box">● GPS OFF<span class="sub">TAP TO FEED SPEED</span></div>
-            <canvas id="rpmCanvas" width="400" height="400"></canvas>
-            <div class="rpm-center">
-                <div id="rpm-digital" class="val">0</div>
-                <div class="unit">RPM</div>
-                <div id="spd-digital" class="spd">-- KM/H</div>
-            </div>
-        </div>
-        <div class="right-panel">
-            <div class="card card-tps"><div class="card-header-box"><div class="header-title tps-txt">TPS</div><div class="header-sub">THROTTLE</div></div><div class="card-body"><div id="tps-val" class="card-value tps-txt">0.0</div><div class="card-unit">%</div></div></div>
-            <div class="card card-afr"><div class="card-header-box"><div class="header-title afr-txt">AFR</div><div class="header-sub">AIR/FUEL</div></div><div class="card-body"><div id="afr-val" class="card-value afr-txt">14.7</div><div class="card-unit">:1</div></div></div>
-            <div class="card card-eot"><div class="card-header-box"><div class="header-title eot-txt">EOT</div><div class="header-sub">ENGINE TEMP</div></div><div class="card-body"><div id="eot-val" class="card-value eot-txt">0</div><div class="card-unit">°C</div></div></div>
-            <div class="card card-bat"><div class="card-header-box"><div class="header-title bat-txt">BAT</div><div class="header-sub">VOLTAGE</div></div><div class="card-body"><div id="bat-val" class="card-value bat-txt">0.0</div><div class="card-unit">V</div></div></div>
-        </div>
+
+<div id="topbar">
+  <div id="status-box">● TAP TO CONNECT</div>
+  <div id="gps-box">● GPS OFF<span class="sub">TAP TO FEED SPEED</span></div>
+</div>
+
+<div id="pages">
+
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dash">
+    <div class="left-panel" id="rpm-panel">
+      <canvas id="rpmCanvas" width="400" height="400"></canvas>
+      <div class="rpm-center">
+        <div id="rpm-digital" class="val">0</div>
+        <div class="unit">RPM</div>
+        <div id="spd-digital" class="spd">-- KM/H</div>
+      </div>
     </div>
-    <script>
-        document.body.addEventListener('click', function(e) {
-            if (e.target.id === 'status-box') return; // อย่าให้ปุ่มเชื่อมต่อไปสั่ง fullscreen ด้วย
-            if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(err => console.log(err)); }
-        });
+    <div class="right-panel">
+      <div class="card card-tps"><div class="card-header-box"><div class="header-title tps-txt">TPS</div><div class="header-sub">THROTTLE</div></div><div class="card-body"><div id="tps-val" class="card-value tps-txt">0.0</div><div class="card-unit">%</div></div></div>
+      <div class="card card-afr"><div class="card-header-box"><div class="header-title afr-txt">AFR</div><div class="header-sub">AIR/FUEL</div></div><div class="card-body"><div id="afr-val" class="card-value afr-txt">14.7</div><div class="card-unit">:1</div></div></div>
+      <div class="card card-eot"><div class="card-header-box"><div class="header-title eot-txt">EOT</div><div class="header-sub">ENGINE TEMP</div></div><div class="card-body"><div id="eot-val" class="card-value eot-txt">0</div><div class="card-unit">°C</div></div></div>
+      <div class="card card-bat"><div class="card-header-box"><div class="header-title bat-txt">BAT</div><div class="header-sub">VOLTAGE</div></div><div class="card-body"><div id="bat-val" class="card-value bat-txt">0.0</div><div class="card-unit">V</div></div></div>
+    </div>
+  </div>
 
-        // ─── เก็บ DOM ไว้ใช้ซ้ำ ไม่ค้นหาใหม่ทุกเฟรม ───
-        const el = {
-            rpm: document.getElementById('rpm-digital'),
-            tps: document.getElementById('tps-val'),
-            afr: document.getElementById('afr-val'),
-            eot: document.getElementById('eot-val'),
-            bat: document.getElementById('bat-val'),
-            spd: document.getElementById('spd-digital')
-        };
-        // เขียน text เฉพาะตอนค่าเปลี่ยนจริง ลดงาน repaint
-        function setText(node, txt) { if (node.__t !== txt) { node.__t = txt; node.textContent = txt; } }
+  <!-- ALL DATA -->
+  <div class="page" id="page-data">
+    <div class="data-grid">
+      <div class="data-tile"><div class="lbl">RPM</div><div class="val" id="d-rpm">0</div></div>
+      <div class="data-tile"><div class="lbl">TPS (%)</div><div class="val" id="d-tps">0.0</div></div>
+      <div class="data-tile"><div class="lbl">EOT (°C)</div><div class="val" id="d-eot">0</div></div>
+      <div class="data-tile"><div class="lbl">BAT (V)</div><div class="val" id="d-bat">0.0</div></div>
+      <div class="data-tile"><div class="lbl">AFR</div><div class="val" id="d-afr">14.7</div></div>
+      <div class="data-tile"><div class="lbl">O2 (V)</div><div class="val" id="d-o2">0.00</div></div>
+      <div class="data-tile"><div class="lbl">STFT (%)</div><div class="val" id="d-stft">--</div></div>
+      <div class="data-tile"><div class="lbl">INJ (ms)</div><div class="val" id="d-inj">0</div></div>
+      <div class="data-tile"><div class="lbl">SPK (deg)</div><div class="val" id="d-spk">0.0</div></div>
+      <div class="data-tile"><div class="lbl">SPD (km/h)</div><div class="val" id="d-spd">0</div></div>
+      <div class="data-tile link"><div class="lbl">ECU LINK</div><div class="val" id="d-link">NO</div></div>
+    </div>
+  </div>
 
-        const canvas = document.getElementById('rpmCanvas'); const ctx = canvas.getContext('2d'); const cx = canvas.width / 2; const cy = canvas.height / 2; const r = 160;
-        const startAng = Math.PI * 0.8; const endAng = Math.PI * 2.2; const totalAng = endAng - startAng;
-        const maxRpm = 12000; const redline = 10000;
-        const rpmPanel = document.getElementById('rpm-panel');
-        let targetRpm = 0; let currentRpm = 0;
-        function drawGauge(rpm) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.beginPath(); ctx.arc(cx, cy, r - 5, startAng + (redline/maxRpm)*totalAng, endAng); ctx.strokeStyle = 'rgba(255, 0, 0, 0.15)'; ctx.lineWidth = 30; ctx.stroke();
-            for(let i = 0; i <= 120; i++) {
-                let ang = startAng + (i / 120) * totalAng; let isMajor = (i % 10 === 0); let length = isMajor ? 18 : 6; let color = (i >= 100) ? '#ff3b30' : (isMajor ? '#ffffff' : '#444');
-                ctx.beginPath(); ctx.moveTo(cx + Math.cos(ang) * r, cy + Math.sin(ang) * r); ctx.lineTo(cx + Math.cos(ang) * (r + length), cy + Math.sin(ang) * (r + length)); ctx.lineWidth = isMajor ? 3 : 1; ctx.strokeStyle = color; ctx.stroke();
-                if(isMajor) { let txtR = r - 28; ctx.fillStyle = color; ctx.font = "bold 20px 'Rajdhani'"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(i/10, cx + Math.cos(ang) * txtR, cy + Math.sin(ang) * txtR); }
-            }
-            ctx.beginPath(); ctx.arc(cx, cy, r + 12, startAng, endAng); ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'; ctx.lineWidth = 8; ctx.stroke();
-            let rpmCap = Math.min(Math.max(rpm, 0), maxRpm); let curAng = startAng + (rpmCap / maxRpm) * totalAng;
-            if (rpm > 0) {
-                ctx.beginPath(); ctx.arc(cx, cy, r + 12, startAng, curAng);
-                let grad = ctx.createLinearGradient(0, canvas.height, canvas.width, 0); grad.addColorStop(0, '#00e5ff'); grad.addColorStop(0.5, '#d500f9'); grad.addColorStop(1, '#ff3b30');
-                ctx.strokeStyle = grad; ctx.lineWidth = 8; ctx.lineCap = "round"; ctx.shadowColor = (rpm >= redline) ? '#ff3b30' : '#d500f9'; ctx.shadowBlur = 15; ctx.stroke(); ctx.shadowBlur = 0;
-                let tipX = cx + Math.cos(curAng) * (r + 12); let tipY = cy + Math.sin(curAng) * (r + 12);
-                ctx.beginPath(); ctx.arc(tipX, tipY, 6, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.shadowColor = '#fff'; ctx.shadowBlur = 10; ctx.fill(); ctx.shadowBlur = 0;
-            }
-            if (rpm >= redline) { rpmPanel.style.boxShadow = "inset 0 0 60px rgba(255, 0, 0, 0.8)"; rpmPanel.style.borderColor = "rgba(255, 0, 0, 0.8)"; rpmPanel.style.background = "radial-gradient(circle at center, rgba(255, 0, 0, 0.3) 0%, rgba(10, 10, 12, 0.95) 70%)"; }
-            else { rpmPanel.style.boxShadow = "inset 0 0 40px rgba(0, 0, 0, 1)"; rpmPanel.style.borderColor = "rgba(100, 100, 100, 0.3)"; rpmPanel.style.background = "radial-gradient(circle at center, rgba(0, 229, 255, 0.15) 0%, rgba(213, 0, 249, 0.05) 40%, rgba(10, 10, 12, 0.95) 70%)"; }
-        }
-        // ปรับเข็มแบบอิงเวลาจริง (time-based) ความเร็วตอบสนองเท่ากันทุกอัตราเฟรม จอ 60/90/120Hz
-        let lastFrame = performance.now();
-        function animateGauge(now) {
-            const dt = Math.min((now - lastFrame) / 1000, 0.05); lastFrame = now;
-            const k = 1 - Math.pow(0.0005, dt); // ~0.12 ต่อเฟรมที่ 60Hz — นุ่มแต่ไวกว่าเดิมเล็กน้อย
-            currentRpm += (targetRpm - currentRpm) * k;
-            drawGauge(currentRpm);
-            setText(el.rpm, String(Math.round(currentRpm)));
-            requestAnimationFrame(animateGauge);
-        }
+  <!-- DTC -->
+  <div class="page" id="page-dtc">
+    <div class="dtc-btns">
+      <div class="dtc-btn" id="btn-scan">SCAN DTC</div>
+      <div class="dtc-btn danger" id="btn-clear">CLEAR DTC</div>
+    </div>
+    <div class="dtc-result">
+      <div class="dtc-status" id="dtc-status">READY</div>
+      <div class="dtc-hex" id="dtc-hex"></div>
+    </div>
+  </div>
 
-        // ==========================================
-        // Web Bluetooth — UUID ตรงกับฝั่ง firmware v1.2.0+
-        // ==========================================
-        const BLE_SERVICE_UUID = '8e2f1a10-52d3-4c3a-9f0e-1a2b3c4d5e6f';
-        const BLE_CHAR_UUID    = '8e2f1a11-52d3-4c3a-9f0e-1a2b3c4d5e6f';
-        const BLE_CHAR_GPS_UUID = '8e2f1a12-52d3-4c3a-9f0e-1a2b3c4d5e6f';
+  <!-- SETTINGS -->
+  <div class="page" id="page-set">
+    <div class="set-section">
+      <div class="set-title">THEME</div>
+      <div class="theme-grid" id="theme-grid"></div>
+    </div>
+    <div class="set-section">
+      <div class="set-title">DISPLAY</div>
+      <div class="toggle-row">
+        <div><div class="lbl">Keep screen awake</div><div class="sub">กันจอดับตอนขับ (Wake Lock)</div></div>
+        <div class="switch" id="wakelock-switch"></div>
+      </div>
+    </div>
+    <div class="set-section">
+      <div class="set-title">CONNECTION</div>
+      <div class="btn-row">
+        <div class="mini-btn" id="btn-forget">FORGET DEVICE</div>
+        <div class="mini-btn danger" id="btn-disconnect">DISCONNECT</div>
+      </div>
+    </div>
+  </div>
 
-        let bleDevice = null;
-        let bleServer = null;
-        let bleChar = null;
-        let gpsChar = null;
-        let reconnectTimer = null;
-        let isConnecting = false;          // กันเรียก gatt.connect ซ้อนกัน (สาเหตุ "GATT operation in progress")
-        let reconnectDelay = 1000;         // backoff 1s→2s→4s→5s กันยิงถี่จน BLE ล่ม
-        let watchingAdverts = false;
-        let disconnectHooked = false;
-        let lastPacketAt = 0;              // เวลา packet ล่าสุด — ใช้เช็คข้อมูลค้าง
-        const statusBox = document.getElementById('status-box');
-        const LAST_DEVICE_KEY = 'ecu_hud_last_ble_device_id';
-        const GPS_ON_KEY = 'ecu_hud_gps_feed_on';
+</div>
 
-        function setStatus(text, color, connected) {
-            statusBox.innerText = text;
-            statusBox.style.color = color;
-            statusBox.classList.toggle('connected', !!connected);
-        }
+<div id="tabbar">
+  <div class="tab-btn active" data-page="page-dash">
+    <svg viewBox="0 0 24 24"><path d="M12 2 L12 6 M12 22 L12 18 M2 12 L6 12 M22 12 L18 12"/><circle cx="12" cy="12" r="7"/><path d="M12 12 L16 9"/></svg>
+    DASH
+  </div>
+  <div class="tab-btn" data-page="page-data">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    DATA
+  </div>
+  <div class="tab-btn" data-page="page-dtc">
+    <svg viewBox="0 0 24 24"><path d="M12 2 L20 6 V12 C20 17 16.5 20.5 12 22 C7.5 20.5 4 17 4 12 V6 Z"/><path d="M9 12 L11 14 L15 9"/></svg>
+    DTC
+  </div>
+  <div class="tab-btn" data-page="page-set">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    SET
+  </div>
+</div>
 
-        function hookDisconnectOnce() {
-            // ต้อง hook listener ครั้งเดียวต่อ device — เดิม hook ซ้ำทุกรอบทำให้ onDisconnected ยิงหลายครั้ง
-            if (disconnectHooked || !bleDevice) return;
-            bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
-            disconnectHooked = true;
-        }
+<script>
+document.body.addEventListener('click', function(e){
+  if (e.target.closest('#status-box, #gps-box, .tab-btn, .dtc-btn, .theme-swatch, .switch, .mini-btn')) return;
+  if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(()=>{}); }
+});
 
-        async function connectGatt() {
-            if (isConnecting || !bleDevice) throw new Error('busy');
-            isConnecting = true;
-            try {
-                setStatus('● CONNECTING...', '#ffe066', false);
-                bleServer = await bleDevice.gatt.connect();
-                const service = await bleServer.getPrimaryService(BLE_SERVICE_UUID);
-                bleChar = await service.getCharacteristic(BLE_CHAR_UUID);
-                await bleChar.startNotifications();
-                bleChar.addEventListener('characteristicvaluechanged', onDataReceived);
-                lastPacketAt = Date.now();
-                setStatus('● LIVE LINK', '#00e676', true);
-                reconnectDelay = 1000; // ต่อได้แล้ว รีเซ็ตความถี่ลองใหม่
-                localStorage.setItem(LAST_DEVICE_KEY, bleDevice.id);
-                stopWatchingAdverts();
+// ─────────── Tabs ───────────
+const tabs = document.querySelectorAll('.tab-btn');
+const pages = document.querySelectorAll('.page');
+tabs.forEach(t => t.addEventListener('click', () => {
+  tabs.forEach(x => x.classList.remove('active'));
+  pages.forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  document.getElementById(t.dataset.page).classList.add('active');
+}));
 
-                // GPS characteristic — firmware รุ่นเก่าอาจไม่มี ไม่ให้ล้มทั้งการเชื่อมต่อ
-                try {
-                    gpsChar = await service.getCharacteristic(BLE_CHAR_GPS_UUID);
-                } catch (e) {
-                    gpsChar = null;
-                    console.log('ไม่พบ GPS characteristic บน firmware นี้ (flash v1.2.0 ขึ้นไปเพื่อใช้ครบ)');
-                }
+// ─────────── DOM refs ───────────
+const el = {
+  rpm: document.getElementById('rpm-digital'),
+  tps: document.getElementById('tps-val'),
+  afr: document.getElementById('afr-val'),
+  eot: document.getElementById('eot-val'),
+  bat: document.getElementById('bat-val'),
+  spd: document.getElementById('spd-digital'),
+  dRpm: document.getElementById('d-rpm'), dTps: document.getElementById('d-tps'),
+  dEot: document.getElementById('d-eot'), dBat: document.getElementById('d-bat'),
+  dAfr: document.getElementById('d-afr'), dO2: document.getElementById('d-o2'),
+  dStft: document.getElementById('d-stft'), dInj: document.getElementById('d-inj'),
+  dSpk: document.getElementById('d-spk'), dSpd: document.getElementById('d-spd'),
+  dLink: document.getElementById('d-link')
+};
+function setText(node, txt){ if (node.__t !== txt) { node.__t = txt; node.textContent = txt; } }
 
-                // เคยเปิดส่ง GPS ไว้ → เปิดให้เองหลัง reconnect ไม่ต้องมากดใหม่
-                if (gpsChar && localStorage.getItem(GPS_ON_KEY) === '1' && !gpsSending) {
-                    gpsSending = true;
-                    startGpsWatch();
-                    setGpsStatus('● GPS ...', true);
-                }
-            } finally {
-                isConnecting = false;
-            }
-        }
+// ─────────── RPM Gauge ───────────
+const canvas = document.getElementById('rpmCanvas'); const ctx = canvas.getContext('2d');
+const cx = canvas.width/2, cy = canvas.height/2, r = 160;
+const startAng = Math.PI*0.8, endAng = Math.PI*2.2, totalAng = endAng-startAng;
+const maxRpm = 12000, redline = 10000;
+const rpmPanel = document.getElementById('rpm-panel');
+let targetRpm=0, currentRpm=0;
+function drawGauge(rpm){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.beginPath(); ctx.arc(cx,cy,r-5, startAng+(redline/maxRpm)*totalAng, endAng); ctx.strokeStyle='rgba(255,0,0,0.15)'; ctx.lineWidth=30; ctx.stroke();
+  for(let i=0;i<=120;i++){
+    let ang=startAng+(i/120)*totalAng; let isMajor=(i%10===0); let length=isMajor?18:6;
+    let color=(i>=100)?'#ff3b30':(isMajor?'#ffffff':'#444');
+    ctx.beginPath(); ctx.moveTo(cx+Math.cos(ang)*r, cy+Math.sin(ang)*r); ctx.lineTo(cx+Math.cos(ang)*(r+length), cy+Math.sin(ang)*(r+length));
+    ctx.lineWidth=isMajor?3:1; ctx.strokeStyle=color; ctx.stroke();
+    if(isMajor){ let txtR=r-28; ctx.fillStyle=color; ctx.font="bold 20px 'Rajdhani'"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(i/10, cx+Math.cos(ang)*txtR, cy+Math.sin(ang)*txtR); }
+  }
+  ctx.beginPath(); ctx.arc(cx,cy,r+12,startAng,endAng); ctx.strokeStyle='rgba(255,255,255,0.05)'; ctx.lineWidth=8; ctx.stroke();
+  let rpmCap=Math.min(Math.max(rpm,0),maxRpm); let curAng=startAng+(rpmCap/maxRpm)*totalAng;
+  if(rpm>0){
+    ctx.beginPath(); ctx.arc(cx,cy,r+12,startAng,curAng);
+    let grad=ctx.createLinearGradient(0,canvas.height,canvas.width,0); grad.addColorStop(0,'#00e5ff'); grad.addColorStop(0.5,'#d500f9'); grad.addColorStop(1,'#ff3b30');
+    ctx.strokeStyle=grad; ctx.lineWidth=8; ctx.lineCap="round"; ctx.shadowColor=(rpm>=redline)?'#ff3b30':'#d500f9'; ctx.shadowBlur=15; ctx.stroke(); ctx.shadowBlur=0;
+    let tipX=cx+Math.cos(curAng)*(r+12), tipY=cy+Math.sin(curAng)*(r+12);
+    ctx.beginPath(); ctx.arc(tipX,tipY,6,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.shadowColor='#fff'; ctx.shadowBlur=10; ctx.fill(); ctx.shadowBlur=0;
+  }
+  if(rpm>=redline){ rpmPanel.style.boxShadow="inset 0 0 60px rgba(255,0,0,0.8)"; rpmPanel.style.borderColor="rgba(255,0,0,0.8)"; rpmPanel.style.background="radial-gradient(circle at center, rgba(255,0,0,0.3) 0%, rgba(10,10,12,0.95) 70%)"; }
+  else { rpmPanel.style.boxShadow="inset 0 0 40px rgba(0,0,0,1)"; rpmPanel.style.borderColor="var(--frame)"; rpmPanel.style.background="radial-gradient(circle at center, rgba(0,229,255,0.15) 0%, rgba(213,0,249,0.05) 40%, rgba(10,10,12,0.95) 70%)"; }
+}
+let lastFrame=performance.now();
+function animateGauge(now){
+  const dt=Math.min((now-lastFrame)/1000,0.05); lastFrame=now;
+  const k=1-Math.pow(0.0005,dt);
+  currentRpm += (targetRpm-currentRpm)*k;
+  drawGauge(currentRpm);
+  setText(el.rpm, String(Math.round(currentRpm)));
+  requestAnimationFrame(animateGauge);
+}
 
-        async function connectBLE() {
-            if (!navigator.bluetooth) {
-                setStatus('● BLE NOT SUPPORTED', '#ff3b30', false);
-                alert('เบราว์เซอร์นี้ไม่รองรับ Web Bluetooth (บน iOS ให้ใช้แอปเบราว์เซอร์ เช่น Bluefy)');
-                return;
-            }
-            try {
-                setStatus('● SCANNING...', '#ffe066', false);
-                bleDevice = await navigator.bluetooth.requestDevice({
-                    filters: [{ services: [BLE_SERVICE_UUID] }],
-                    optionalServices: [BLE_SERVICE_UUID]
-                });
-                disconnectHooked = false;
-                hookDisconnectOnce();
-                await connectGatt();
-            } catch (err) {
-                console.error('BLE connect error:', err);
-                setStatus('● TAP TO CONNECT', '#ff3b30', false);
-            }
-        }
+// ─────────── BLE ───────────
+const BLE_SERVICE_UUID = '8e2f1a10-52d3-4c3a-9f0e-1a2b3c4d5e6f';
+const BLE_CHAR_UUID    = '8e2f1a11-52d3-4c3a-9f0e-1a2b3c4d5e6f';
+const BLE_CHAR_GPS_UUID = '8e2f1a12-52d3-4c3a-9f0e-1a2b3c4d5e6f';
+const BLE_CHAR_CMD_UUID = '8e2f1a13-52d3-4c3a-9f0e-1a2b3c4d5e6f';
+const BLE_CHAR_DTC_UUID = '8e2f1a14-52d3-4c3a-9f0e-1a2b3c4d5e6f';
 
-        // Auto-connect ตอนเปิดหน้าเว็บด้วยอุปกรณ์ที่เคยอนุญาตไว้ (Chrome/Edge รุ่นใหม่)
-        async function tryAutoConnect() {
-            requestAnimationFrame(animateGauge);
-            if (!navigator.bluetooth || !navigator.bluetooth.getDevices) return;
-            try {
-                const knownDevices = await navigator.bluetooth.getDevices();
-                if (knownDevices.length === 0) return;
-                const lastId = localStorage.getItem(LAST_DEVICE_KEY);
-                bleDevice = knownDevices.find(d => d.id === lastId) || knownDevices[0];
-                hookDisconnectOnce();
-                try {
-                    await connectGatt();
-                } catch (err) {
-                    // ESP ยังไม่เปิด/อยู่นอกระยะ — รอฟังโฆษณาแทนการรีดึงยาวๆ
-                    watchForDevice();
-                    setStatus('● WAITING FOR DEVICE...', '#ffe066', false);
-                }
-            } catch (err) {
-                console.log('Auto-connect ไม่สำเร็จ:', err);
-                setStatus('● TAP TO CONNECT', '#ff3b30', false);
-            }
-        }
+let bleDevice=null, bleServer=null, bleChar=null, gpsChar=null, cmdChar=null, dtcChar=null;
+let reconnectTimer=null, isConnecting=false, reconnectDelay=1000;
+let watchingAdverts=false, disconnectHooked=false, lastPacketAt=0;
+const statusBox=document.getElementById('status-box');
+const LAST_DEVICE_KEY='ecu_hud_last_ble_device_id';
+const GPS_ON_KEY='ecu_hud_gps_feed_on';
 
-        // รอฟังโฆษณา BLE จาก ESP — เมื่อได้ยินเสียง = อุปกรณ์อยู่ในระยะแล้ว ค่อยต่อทันที
-        // (แม่นและเบากว่าการลอง gatt.connect ทุก 2 วินาทีเปล่าๆ)
-        function watchForDevice() {
-            if (!bleDevice || watchingAdverts || !bleDevice.watchAdvertisements) return;
-            watchingAdverts = true;
-            const onAdvert = () => {
-                bleDevice.removeEventListener('advertisementreceived', onAdvert);
-                stopWatchingAdverts();
-                scheduleReconnect(0); // เจอแล้ว ต่อเลยไม่ต้องรอ
-            };
-            bleDevice.addEventListener('advertisementreceived', onAdvert);
-            bleDevice.watchAdvertisements().catch(() => { watchingAdverts = false; });
-        }
-        function stopWatchingAdverts() {
-            if (!watchingAdverts || !bleDevice) return;
-            watchingAdverts = false;
-            if (bleDevice.stopWatchingAdvertisements) {
-                bleDevice.stopWatchingAdvertisements().catch(() => {});
-            }
-        }
+function setStatus(text,color,connected){ statusBox.innerText=text; statusBox.style.color=color; statusBox.classList.toggle('connected', !!connected); }
+function hookDisconnectOnce(){ if(disconnectHooked||!bleDevice) return; bleDevice.addEventListener('gattserverdisconnected', onDisconnected); disconnectHooked=true; }
 
-        function onDisconnected() {
-            gpsChar = null;
-            setStatus('● LINK LOST - RECONNECTING...', '#ff3b30', false);
-            scheduleReconnect();
-            watchForDevice(); // พอ ESP กลับมาในระยะ (เปิดสวิตช์ใหม่) จะได้ต่อทันที
-        }
+async function connectGatt(){
+  if (isConnecting || !bleDevice) throw new Error('busy');
+  isConnecting=true;
+  try{
+    setStatus('● CONNECTING...', '#ffe066', false);
+    bleServer = await bleDevice.gatt.connect();
+    const service = await bleServer.getPrimaryService(BLE_SERVICE_UUID);
+    bleChar = await service.getCharacteristic(BLE_CHAR_UUID);
+    await bleChar.startNotifications();
+    bleChar.addEventListener('characteristicvaluechanged', onDataReceived);
+    lastPacketAt = Date.now();
+    setStatus('● LIVE LINK', '#00e676', true);
+    reconnectDelay=1000;
+    localStorage.setItem(LAST_DEVICE_KEY, bleDevice.id);
+    stopWatchingAdverts();
 
-        function scheduleReconnect(delayMs) {
-            if (reconnectTimer || !bleDevice) return;
-            reconnectTimer = setTimeout(async () => {
-                reconnectTimer = null;
-                try {
-                    await connectGatt();
-                } catch (err) {
-                    setStatus('● LINK LOST - RECONNECTING...', '#ff3b30', false);
-                    scheduleReconnect(reconnectDelay);
-                    reconnectDelay = Math.min(reconnectDelay * 2, 5000); // ถอยช้าลงทีละนิดเมื่อลองบ่อยๆ ไม่สำเร็จ
-                }
-            }, delayMs != null ? delayMs : reconnectDelay);
-        }
+    try { gpsChar = await service.getCharacteristic(BLE_CHAR_GPS_UUID); } catch(e){ gpsChar=null; }
+    try {
+      cmdChar = await service.getCharacteristic(BLE_CHAR_CMD_UUID);
+      dtcChar = await service.getCharacteristic(BLE_CHAR_DTC_UUID);
+      await dtcChar.startNotifications();
+      dtcChar.addEventListener('characteristicvaluechanged', onDtcReceived);
+    } catch(e){ cmdChar=null; dtcChar=null; console.log('ไม่พบ DTC characteristic บน firmware นี้ (flash v1.3.0 ขึ้นไปเพื่อใช้ DTC ผ่านเว็บ)'); }
 
-        // เช็คข้อมูลค้าง: ต่ออยู่แต่ไม่มี packet เกิน 2.5 วิ (เช่น ECU หลุดบน firmware เก่า) ให้รู้ตัว
-        setInterval(() => {
-            if (bleServer && bleServer.connected && Date.now() - lastPacketAt > 2500) {
-                setStatus('● LINK OK - NO ECU DATA', '#ffe066', false);
-            }
-        }, 1000);
+    if (gpsChar && localStorage.getItem(GPS_ON_KEY)==='1' && !gpsSending){
+      gpsSending=true; startGpsWatch(); setGpsStatus('● GPS ...', true);
+    }
+  } finally { isConnecting=false; }
+}
 
-        // parse binary packet จาก firmware v1.2.0 (13 ไบต์) / เก่ากว่า (10 ไบต์) — little-endian
-        function onDataReceived(event) {
-            const dv = event.target.value;
-            const rpm = dv.getUint16(0, true);
-            const tps = dv.getInt16(2, true) / 10.0;
-            const afr = dv.getInt16(4, true) / 10.0;
-            const eot = dv.getInt16(6, true);
-            const bat = dv.getInt16(8, true) / 10.0;
+async function connectBLE(){
+  if (!navigator.bluetooth){
+    setStatus('● BLE NOT SUPPORTED', '#ff3b30', false);
+    alert('เบราว์เซอร์นี้ไม่รองรับ Web Bluetooth (บน iOS ให้ใช้แอปเบราว์เซอร์ เช่น Bluefy)');
+    return;
+  }
+  try{
+    setStatus('● SCANNING...', '#ffe066', false);
+    bleDevice = await navigator.bluetooth.requestDevice({ filters:[{ services:[BLE_SERVICE_UUID] }], optionalServices:[BLE_SERVICE_UUID] });
+    disconnectHooked=false; hookDisconnectOnce();
+    await connectGatt();
+  } catch(err){ console.error('BLE connect error:', err); setStatus('● TAP TO CONNECT', '#ff3b30', false); }
+}
 
-            targetRpm = rpm;
-            lastPacketAt = Date.now();
-            setText(el.tps, tps.toFixed(1));
-            setText(el.afr, afr.toFixed(1));
-            setText(el.eot, String(eot));
-            setText(el.bat, bat.toFixed(1));
+async function tryAutoConnect(){
+  requestAnimationFrame(animateGauge);
+  if (!navigator.bluetooth || !navigator.bluetooth.getDevices) return;
+  try{
+    const knownDevices = await navigator.bluetooth.getDevices();
+    if (knownDevices.length===0) return;
+    const lastId = localStorage.getItem(LAST_DEVICE_KEY);
+    bleDevice = knownDevices.find(d=>d.id===lastId) || knownDevices[0];
+    hookDisconnectOnce();
+    try{ await connectGatt(); }
+    catch(err){ watchForDevice(); setStatus('● WAITING FOR DEVICE...', '#ffe066', false); }
+  } catch(err){ console.log('Auto-connect ไม่สำเร็จ:', err); setStatus('● TAP TO CONNECT', '#ff3b30', false); }
+}
 
-            // v1.2: ความเร็วรวมจาก ESP (GPS หรือ EST จาก RPM) + สีบอกแหล่ง
-            if (dv.byteLength >= 13) {
-                const kmh = dv.getUint16(10, true) / 10.0;
-                const mode = dv.getUint8(12); // 0=ไม่มี 1=EST(RPM) 2=GPS
-                setText(el.spd, Math.round(kmh) + ' KM/H');
-                el.spd.className = 'spd ' + (mode === 2 ? 'gps' : (mode === 1 ? 'est' : ''));
-            }
-        }
+function watchForDevice(){
+  if (!bleDevice || watchingAdverts || !bleDevice.watchAdvertisements) return;
+  watchingAdverts=true;
+  const onAdvert=()=>{ bleDevice.removeEventListener('advertisementreceived', onAdvert); stopWatchingAdverts(); scheduleReconnect(0); };
+  bleDevice.addEventListener('advertisementreceived', onAdvert);
+  bleDevice.watchAdvertisements().catch(()=>{ watchingAdverts=false; });
+}
+function stopWatchingAdverts(){
+  if (!watchingAdverts || !bleDevice) return;
+  watchingAdverts=false;
+  if (bleDevice.stopWatchingAdvertisements) bleDevice.stopWatchingAdvertisements().catch(()=>{});
+}
+function onDisconnected(){
+  gpsChar=null; cmdChar=null; dtcChar=null;
+  setStatus('● LINK LOST - RECONNECTING...', '#ff3b30', false);
+  scheduleReconnect(); watchForDevice();
+}
+function scheduleReconnect(delayMs){
+  if (reconnectTimer || !bleDevice) return;
+  reconnectTimer=setTimeout(async ()=>{
+    reconnectTimer=null;
+    try{ await connectGatt(); }
+    catch(err){ setStatus('● LINK LOST - RECONNECTING...', '#ff3b30', false); scheduleReconnect(reconnectDelay); reconnectDelay=Math.min(reconnectDelay*2,5000); }
+  }, delayMs!=null ? delayMs : reconnectDelay);
+}
+setInterval(()=>{
+  if (bleServer && bleServer.connected && Date.now()-lastPacketAt>2500) setStatus('● LINK OK - NO ECU DATA', '#ffe066', false);
+}, 1000);
 
-        statusBox.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (!statusBox.classList.contains('connected')) connectBLE();
-        });
+// parse v1.3 21-byte packet (little-endian); falls back gracefully on older 13-byte firmware
+function onDataReceived(event){
+  const dv = event.target.value;
+  const rpm = dv.getUint16(0, true);
+  const tps = dv.getInt16(2, true)/10.0;
+  const afr = dv.getInt16(4, true)/10.0;
+  const eot = dv.getInt16(6, true);
+  const bat = dv.getInt16(8, true)/10.0;
 
-        // ==========================================
-        // GPS Speed feed — ส่งความเร็ว GPS มือถือเข้า ESP
-        // ฝั่ง ESP จะเกลี่ยกับความเร็วที่คำนวณจาก RPM เอง
-        // ==========================================
-        const gpsBox = document.getElementById('gps-box');
-        let gpsWatchId = null;
-        let gpsSending = false;
-        let lastGpsWriteAt = 0;
-        let lastSentKmh = -999;
-        let lastPos = null; // { lat, lon, t } — สำรองคำนวณเองเมื่อ coords.speed เป็น null
+  targetRpm = rpm;
+  lastPacketAt = Date.now();
+  setText(el.tps, tps.toFixed(1)); setText(el.dTps, tps.toFixed(1));
+  setText(el.afr, afr.toFixed(1)); setText(el.dAfr, afr.toFixed(1));
+  setText(el.eot, String(eot));    setText(el.dEot, String(eot));
+  setText(el.bat, bat.toFixed(1)); setText(el.dBat, bat.toFixed(1));
+  setText(el.dRpm, String(rpm));
 
-        function setGpsStatus(text, sending) {
-            gpsBox.innerHTML = text + '<span class="sub">' + (sending ? 'TAP TO STOP' : 'TAP TO FEED SPEED') + '</span>';
-            gpsBox.classList.toggle('sending', !!sending);
-        }
+  if (dv.byteLength >= 13){
+    const kmh = dv.getUint16(10, true)/10.0;
+    const mode = dv.getUint8(12); // 0=none 1=EST(GPS+RPM fusion) 2=GPS
+    setText(el.spd, Math.round(kmh)+' KM/H');
+    el.spd.className = 'spd ' + (mode===2 ? 'gps' : (mode===1 ? 'est' : ''));
+    setText(el.dSpd, String(Math.round(kmh)));
+  }
+  if (dv.byteLength >= 21){
+    const o2 = dv.getInt16(13, true)/100.0;
+    const stft = dv.getInt8(15);
+    const inj = dv.getUint16(16, true);
+    const spk = dv.getInt16(18, true)/10.0;
+    const linkOk = dv.getUint8(20);
+    setText(el.dO2, o2.toFixed(2));
+    setText(el.dStft, stft===-128 ? '--' : String(stft));
+    setText(el.dInj, String(inj));
+    setText(el.dSpk, Math.abs(spk).toFixed(1));
+    setText(el.dLink, linkOk ? 'OK' : 'NO');
+    el.dLink.style.color = linkOk ? 'var(--bat)' : 'var(--eot)';
+  }
+}
 
-        async function writeGpsSpeed(kmh) {
-            if (!gpsChar) return;
-            const buf = new ArrayBuffer(2);
-            new DataView(buf).setInt16(0, Math.round(kmh * 10), true); // km/h × 10, little-endian
-            try {
-                if (gpsChar.properties.writeWithoutResponse) await gpsChar.writeValueWithoutResponse(buf);
-                else await gpsChar.writeValue(buf);
-                lastSentKmh = kmh;
-            } catch (e) { /* พลาดรอบนี้ ข้ามไปรอบถัดไป ไม่ให้ทั้งแอปสะดุด */ }
-        }
+statusBox.addEventListener('click', (e)=>{ e.stopPropagation(); if (!statusBox.classList.contains('connected')) connectBLE(); });
 
-        // ระยะทางระหว่างพิกัด 2 จุด (เมตร) — สูตร Haversine
-        function haversineMeters(lat1, lon1, lat2, lon2) {
-            const R = 6371000;
-            const toRad = d => d * Math.PI / 180;
-            const dLat = toRad(lat2 - lat1);
-            const dLon = toRad(lon2 - lon1);
-            const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        }
+// ─────────── DTC page ───────────
+const dtcStatusEl = document.getElementById('dtc-status');
+const dtcHexEl = document.getElementById('dtc-hex');
+const btnScan = document.getElementById('btn-scan');
+const btnClear = document.getElementById('btn-clear');
+let clearArmed=false, clearArmTimer=null;
 
-        function onGpsPosition(pos) {
-            const { latitude, longitude, speed } = pos.coords;
-            const nowTs = pos.timestamp || Date.now();
-            let kmh = null;
+function setDtcStatus(text, kind){
+  dtcStatusEl.textContent = text;
+  dtcStatusEl.className = 'dtc-status' + (kind ? ' '+kind : '');
+}
 
-            if (typeof speed === 'number' && !Number.isNaN(speed)) {
-                kmh = Math.max(0, speed * 3.6); // มือถือคำนวณให้แล้ว ใช้เลย (แม่นกว่า)
-            } else if (lastPos) {
-                const dt = (nowTs - lastPos.t) / 1000; // วินาที
-                if (dt > 0.2 && dt < 10) { // กันค่าพัง ถ้าเว้นช่วงนานเกินไปหรือถี่เกินไป
-                    const distM = haversineMeters(lastPos.lat, lastPos.lon, latitude, longitude);
-                    kmh = Math.max(0, (distM / dt) * 3.6); // สำรอง: คำนวณเองจากระยะทาง/เวลา
-                }
-            }
-            lastPos = { lat: latitude, lon: longitude, t: nowTs };
+async function sendCmd(byte){
+  if (!cmdChar){ setDtcStatus('NO DTC LINK (flash v1.3.0)', 'err'); return; }
+  const buf = new Uint8Array([byte]);
+  try{
+    if (cmdChar.properties.writeWithoutResponse) await cmdChar.writeValueWithoutResponse(buf);
+    else await cmdChar.writeValue(buf);
+  } catch(e){ setDtcStatus('SEND FAILED', 'err'); }
+}
 
-            if (kmh == null) {
-                setGpsStatus('● WAITING FIX...', gpsSending);
-                return;
-            }
+btnScan.addEventListener('click', (e)=>{
+  e.stopPropagation();
+  if (!bleServer || !bleServer.connected){ setDtcStatus('NOT CONNECTED', 'err'); return; }
+  setDtcStatus('SCANNING...', 'warn'); dtcHexEl.textContent='';
+  sendCmd(1);
+});
+btnClear.addEventListener('click', (e)=>{
+  e.stopPropagation();
+  if (!bleServer || !bleServer.connected){ setDtcStatus('NOT CONNECTED', 'err'); return; }
+  if (!clearArmed){
+    clearArmed=true; btnClear.textContent='SURE? TAP AGAIN'; btnClear.classList.add('armed');
+    clearArmTimer = setTimeout(()=>{ clearArmed=false; btnClear.textContent='CLEAR DTC'; btnClear.classList.remove('armed'); }, 3000);
+  } else {
+    clearTimeout(clearArmTimer); clearArmed=false; btnClear.textContent='CLEAR DTC'; btnClear.classList.remove('armed');
+    setDtcStatus('CLEARING...', 'warn'); dtcHexEl.textContent='';
+    sendCmd(2);
+  }
+});
 
-            setGpsStatus('● GPS ' + Math.round(kmh) + ' KM/H', gpsSending);
+function onDtcReceived(event){
+  const dv = event.target.value;
+  let off = 0;
+  const slen = dv.getUint8(off); off += 1;
+  let status = '';
+  for (let i=0;i<slen;i++) status += String.fromCharCode(dv.getUint8(off+i));
+  off += slen;
+  const dlen = dv.getUint8(off); off += 1;
+  let hexParts = [];
+  for (let i=0;i<dlen;i++) hexParts.push(dv.getUint8(off+i).toString(16).padStart(2,'0').toUpperCase());
+  dtcHexEl.textContent = hexParts.join(' ');
 
-            const now = Date.now();
-            // ส่งทุก 400ms หรือส่งด่วนเมื่อความเร็วเปลี่ยนมาก (≥2 km/h) ให้หน้าปัดตามทัน
-            if (gpsSending && bleServer && bleServer.connected &&
-                (now - lastGpsWriteAt > 400 || Math.abs(kmh - lastSentKmh) >= 2)) {
-                lastGpsWriteAt = now;
-                writeGpsSpeed(kmh);
-            }
-        }
+  let kind = 'ok';
+  if (/NO DTC|CLEARED|READY/.test(status)) kind='ok';
+  else if (/SCANNING|CLEARING|CONNECTING/.test(status)) kind='warn';
+  else if (/FOUND|TIMEOUT|NO CONNECT|NO REPLY/.test(status)) kind = /FOUND/.test(status) ? 'warn' : 'err';
+  setDtcStatus(status, kind);
+}
 
-        function startGpsWatch() {
-            if (!navigator.geolocation || gpsWatchId != null) return;
-            gpsWatchId = navigator.geolocation.watchPosition(onGpsPosition, (err) => {
-                setGpsStatus('● GPS ERROR: ' + err.message, false);
-                gpsSending = false;
-                localStorage.setItem(GPS_ON_KEY, '0');
-            }, { enableHighAccuracy: true, maximumAge: 1000, timeout: 8000 });
-        }
+// ─────────── Settings: theme picker ───────────
+const THEMES = [
+  { key:'neon',   name:'NEON',     bg:'#000000', bgCheck:'#0a0a0a', panel:'rgba(15,15,15,0.9)', frame:'rgba(100,100,100,0.3)', text:'#ffffff', accent:'#00e5ff', accent2:'#d500f9' },
+  { key:'grybl',  name:'GRY-BLK',  bg:'#1e1e1e', bgCheck:'#161616', panel:'rgba(40,40,40,0.9)', frame:'rgba(150,150,150,0.3)', text:'#e6e6e6', accent:'#bdbdbd', accent2:'#8f8f8f' },
+  { key:'whtbl',  name:'WHT-BLK',  bg:'#f2f2f2', bgCheck:'#e6e6e6', panel:'rgba(255,255,255,0.9)', frame:'rgba(60,60,60,0.25)', text:'#111111', accent:'#333333', accent2:'#666666' },
+  { key:'pink',   name:'PINK',     bg:'#190019', bgCheck:'#12000f', panel:'rgba(40,10,40,0.9)', frame:'rgba(180,50,180,0.35)', text:'#ffffff', accent:'#ff69b4', accent2:'#d500f9' },
+  { key:'bluorg', name:'BLU-ORG',  bg:'#001432', bgCheck:'#000c22', panel:'rgba(10,30,70,0.9)', frame:'rgba(0,100,200,0.35)', text:'#ffffff', accent:'#ff8200', accent2:'#00a0ff' },
+  { key:'yelred', name:'YEL-RED',  bg:'#140000', bgCheck:'#0d0000', panel:'rgba(40,10,10,0.9)', frame:'rgba(220,30,30,0.35)', text:'#ffffff', accent:'#ffdc00', accent2:'#ff3b30' }
+];
+const THEME_KEY='ecu_hud_theme';
+function applyTheme(key){
+  const t = THEMES.find(x=>x.key===key) || THEMES[0];
+  const root = document.documentElement.style;
+  root.setProperty('--bg', t.bg);
+  root.setProperty('--bg-check', t.bgCheck);
+  root.setProperty('--panel', t.panel);
+  root.setProperty('--frame', t.frame);
+  root.setProperty('--text', t.text);
+  root.setProperty('--accent', t.accent);
+  root.setProperty('--accent2', t.accent2);
+  localStorage.setItem(THEME_KEY, key);
+  document.querySelectorAll('.theme-swatch').forEach(s => s.classList.toggle('active', s.dataset.key===key));
+}
+const themeGrid = document.getElementById('theme-grid');
+THEMES.forEach(t=>{
+  const sw = document.createElement('div');
+  sw.className='theme-swatch'; sw.dataset.key=t.key; sw.textContent=t.name;
+  sw.style.background=t.bg; sw.style.color=t.text; sw.style.border='2px solid '+t.frame;
+  sw.addEventListener('click', (e)=>{ e.stopPropagation(); applyTheme(t.key); });
+  themeGrid.appendChild(sw);
+});
+applyTheme(localStorage.getItem(THEME_KEY) || 'neon');
 
-        function stopGpsWatch() {
-            if (gpsWatchId != null) { navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId = null; }
-            lastPos = null;
-        }
+// ─────────── Settings: wake lock ───────────
+let wakeLock=null;
+const wakeSwitch=document.getElementById('wakelock-switch');
+const WAKE_KEY='ecu_hud_wakelock_on';
+async function enableWakeLock(){
+  try{
+    if ('wakeLock' in navigator){ wakeLock = await navigator.wakeLock.request('screen'); }
+    wakeSwitch.classList.add('on'); localStorage.setItem(WAKE_KEY,'1');
+  } catch(e){ wakeSwitch.classList.remove('on'); }
+}
+function disableWakeLock(){
+  if (wakeLock) { wakeLock.release().catch(()=>{}); wakeLock=null; }
+  wakeSwitch.classList.remove('on'); localStorage.setItem(WAKE_KEY,'0');
+}
+wakeSwitch.addEventListener('click', (e)=>{
+  e.stopPropagation();
+  if (wakeSwitch.classList.contains('on')) disableWakeLock(); else enableWakeLock();
+});
+document.addEventListener('visibilitychange', async ()=>{
+  if (document.visibilityState==='visible' && localStorage.getItem(WAKE_KEY)==='1' && !wakeLock) enableWakeLock();
+});
+if (localStorage.getItem(WAKE_KEY)==='1') enableWakeLock();
 
-        gpsBox.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (!navigator.geolocation) { setGpsStatus('● NO GPS SUPPORT', false); return; }
-            gpsSending = !gpsSending;
-            localStorage.setItem(GPS_ON_KEY, gpsSending ? '1' : '0'); // จำสถานะไว้ resume อัตโนมัติหลัง reconnect
-            if (gpsSending) { startGpsWatch(); setGpsStatus('● GPS ...', true); }
-            else { stopGpsWatch(); setGpsStatus('● GPS OFF', false); }
-        });
+// ─────────── Settings: connection buttons ───────────
+document.getElementById('btn-forget').addEventListener('click', async (e)=>{
+  e.stopPropagation();
+  localStorage.removeItem(LAST_DEVICE_KEY);
+  if (bleDevice && bleDevice.forget) { try{ await bleDevice.forget(); }catch(err){} }
+  bleDevice=null; setStatus('● TAP TO CONNECT', '#ff3b30', false);
+});
+document.getElementById('btn-disconnect').addEventListener('click', (e)=>{
+  e.stopPropagation();
+  if (bleDevice && bleDevice.gatt && bleDevice.gatt.connected) bleDevice.gatt.disconnect();
+});
 
-        window.addEventListener('load', tryAutoConnect);
-    </script>
+// ─────────── GPS feed ───────────
+const gpsBox=document.getElementById('gps-box');
+let gpsWatchId=null, gpsSending=false, lastGpsWriteAt=0, lastSentKmh=-999, lastPos=null;
+
+function setGpsStatus(text, sending){
+  gpsBox.innerHTML = text + '<span class="sub">' + (sending?'TAP TO STOP':'TAP TO FEED SPEED') + '</span>';
+  gpsBox.classList.toggle('sending', !!sending);
+}
+async function writeGpsSpeed(kmh){
+  if (!gpsChar) return;
+  const buf = new ArrayBuffer(2);
+  new DataView(buf).setInt16(0, Math.round(kmh*10), true);
+  try{
+    if (gpsChar.properties.writeWithoutResponse) await gpsChar.writeValueWithoutResponse(buf);
+    else await gpsChar.writeValue(buf);
+    lastSentKmh = kmh;
+  } catch(e){}
+}
+function haversineMeters(lat1,lon1,lat2,lon2){
+  const R=6371000; const toRad=d=>d*Math.PI/180;
+  const dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1);
+  const a=Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+function onGpsPosition(pos){
+  const { latitude, longitude, speed } = pos.coords;
+  const nowTs = pos.timestamp || Date.now();
+  let kmh=null;
+  if (typeof speed==='number' && !Number.isNaN(speed)) kmh=Math.max(0, speed*3.6);
+  else if (lastPos){
+    const dt=(nowTs-lastPos.t)/1000;
+    if (dt>0.2 && dt<10){ const distM=haversineMeters(lastPos.lat,lastPos.lon,latitude,longitude); kmh=Math.max(0,(distM/dt)*3.6); }
+  }
+  lastPos = { lat:latitude, lon:longitude, t:nowTs };
+  if (kmh==null){ setGpsStatus('● WAITING FIX...', gpsSending); return; }
+  setGpsStatus('● GPS '+Math.round(kmh)+' KM/H', gpsSending);
+  const now=Date.now();
+  if (gpsSending && bleServer && bleServer.connected && (now-lastGpsWriteAt>400 || Math.abs(kmh-lastSentKmh)>=2)){
+    lastGpsWriteAt=now; writeGpsSpeed(kmh);
+  }
+}
+function startGpsWatch(){
+  if (!navigator.geolocation || gpsWatchId!=null) return;
+  gpsWatchId = navigator.geolocation.watchPosition(onGpsPosition, (err)=>{
+    setGpsStatus('● GPS ERROR: '+err.message, false); gpsSending=false; localStorage.setItem(GPS_ON_KEY,'0');
+  }, { enableHighAccuracy:true, maximumAge:1000, timeout:8000 });
+}
+function stopGpsWatch(){ if (gpsWatchId!=null){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; } lastPos=null; }
+gpsBox.addEventListener('click', (e)=>{
+  e.stopPropagation();
+  if (!navigator.geolocation){ setGpsStatus('● NO GPS SUPPORT', false); return; }
+  gpsSending=!gpsSending; localStorage.setItem(GPS_ON_KEY, gpsSending?'1':'0');
+  if (gpsSending){ startGpsWatch(); setGpsStatus('● GPS ...', true); } else { stopGpsWatch(); setGpsStatus('● GPS OFF', false); }
+});
+
+window.addEventListener('load', tryAutoConnect);
+</script>
 </body>
 </html>
