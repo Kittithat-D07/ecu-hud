@@ -55,7 +55,7 @@
     </div>
     <script>
         document.body.addEventListener('click', function(e) {
-            if (e.target.id === 'status-box') return;
+            if (e.target.id === 'status-box') return; // อย่าให้ปุ่มเชื่อมต่อไปสั่ง fullscreen ด้วย
             if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(err => console.log(err)); }
         });
 
@@ -88,10 +88,13 @@
         window.addEventListener('load', () => { animateGauge(); tryAutoConnect(); });
 
         // ==========================================
-        // Web Bluetooth
+        // Web Bluetooth (แทนที่ WebSocket เดิม)
+        // UUID ต้องตรงกับฝั่ง firmware (ECU_SMOOTH_HUD_BLE.ino)
         // ==========================================
         const BLE_SERVICE_UUID = '8e2f1a10-52d3-4c3a-9f0e-1a2b3c4d5e6f';
         const BLE_CHAR_UUID    = '8e2f1a11-52d3-4c3a-9f0e-1a2b3c4d5e6f';
+        // ความเร็วจาก GPS มือถือ (MSX125 ไม่มีความเร็วจาก K-line เลย) เขียนกลับไปที่ ESP32
+        // ผ่าน characteristic นี้ — firmware ต้องเป็นตัวที่เพิ่ม GPS char แล้วเท่านั้น
         const BLE_CHAR_GPS_UUID = '8e2f1a12-52d3-4c3a-9f0e-1a2b3c4d5e6f';
 
         let bleDevice = null;
@@ -102,72 +105,98 @@
         const statusBox = document.getElementById('status-box');
         const LAST_DEVICE_KEY = 'ecu_hud_last_ble_device_id';
 
-        function autoReconnect() {
-            if (reconnectTimer) clearTimeout(reconnectTimer);
-            if (statusBox.classList.contains('connected')) return;
-            reconnectTimer = setTimeout(() => {
-                console.log('[BLE] Auto-reconnect...');
-                tryAutoConnect();
-            }, 5000);
+        function setStatus(text, color, connected) {
+            statusBox.innerText = text;
+            statusBox.style.color = color;
+            statusBox.classList.toggle('connected', !!connected);
         }
 
-        function setStatusBox(text, connected) {
-            statusBox.innerText = '● ' + text;
-            statusBox.classList.toggle('connected', connected);
-            if (connected) { if (reconnectTimer) clearTimeout(reconnectTimer); }
-            else autoReconnect();
-        }
+        // เชื่อมต่อ GATT + เปิด notification กับอุปกรณ์ที่มี object อยู่แล้ว (bleDevice)
+        // ใช้ได้ทั้งตอนเชื่อมต่อครั้งแรกและตอน auto-reconnect เพราะไม่ต้องขอ permission ใหม่
+        async function connectGatt() {
+            setStatus('● CONNECTING...', '#ffe066', false);
+            bleServer = await bleDevice.gatt.connect();
+            const service = await bleServer.getPrimaryService(BLE_SERVICE_UUID);
+            bleChar = await service.getCharacteristic(BLE_CHAR_UUID);
+            await bleChar.startNotifications();
+            bleChar.addEventListener('characteristicvaluechanged', onDataReceived);
+            setStatus('● LIVE LINK', '#00e676', true);
+            localStorage.setItem(LAST_DEVICE_KEY, bleDevice.id);
 
-        async function connectBLE() {
+            // GPS characteristic เป็นของใหม่ — firmware รุ่นเก่าจะไม่มี ไม่ให้ล้มทั้งการเชื่อมต่อ
             try {
-                setStatusBox('SCANNING...', false);
+                gpsChar = await service.getCharacteristic(BLE_CHAR_GPS_UUID);
+            } catch (e) {
+                gpsChar = null;
+                console.log('ไม่พบ GPS characteristic บน firmware นี้ — ยังส่งความเร็วเข้าหน้าปัดไม่ได้ (flash รุ่นใหม่ก่อน)');
+            }
+        }
+
+        // เรียกจากการแตะปุ่มเท่านั้น (เบราว์เซอร์บังคับต้องมี user gesture ตอนเลือกอุปกรณ์ครั้งแรก)
+        async function connectBLE() {
+            if (!navigator.bluetooth) {
+                setStatus('● BLE NOT SUPPORTED', '#ff3b30', false);
+                alert('เบราว์เซอร์นี้ไม่รองรับ Web Bluetooth (บน iOS ให้ใช้แอปเบราว์เซอร์ เช่น Bluefy)');
+                return;
+            }
+            try {
+                setStatus('● SCANNING...', '#ffe066', false);
                 bleDevice = await navigator.bluetooth.requestDevice({
-                    filters: [{ name: 'ECU-HUD-MSX' }],
+                    filters: [{ services: [BLE_SERVICE_UUID] }],
                     optionalServices: [BLE_SERVICE_UUID]
                 });
-                setStatusBox('CONNECTING...', false);
-                bleServer = await bleDevice.gatt.connect();
-                const service = await bleServer.getPrimaryService(BLE_SERVICE_UUID);
-                bleChar = await service.getCharacteristic(BLE_CHAR_UUID);
-                gpsChar = await service.getCharacteristic(BLE_CHAR_GPS_UUID).catch(() => null);
-                
-                localStorage.setItem(LAST_DEVICE_KEY, bleDevice.id);
-                await bleChar.startNotifications();
-                bleChar.addEventListener('characteristicvaluechanged', onSensorData);
-                
-                setStatusBox('CONNECTED', true);
-                gpsSending = false;
-                setGpsStatus('● GPS OFF', false);
-            } catch (e) {
-                console.error('BLE Error:', e);
-                setStatusBox('ERROR: ' + e.message, false);
+                bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+                await connectGatt();
+            } catch (err) {
+                console.error('BLE connect error:', err);
+                setStatus('● TAP TO CONNECT', '#ff3b30', false);
             }
         }
 
+        // พยายามเชื่อมต่ออัตโนมัติตอนเปิดหน้าเว็บ โดยใช้อุปกรณ์ที่เคยได้รับอนุญาตไว้แล้ว
+        // (ไม่ต้องมี user gesture เพราะเคยขอ permission ผ่าน requestDevice() ไปแล้วครั้งก่อน)
+        // รองรับเฉพาะ Chrome/Edge รุ่นใหม่ที่มี navigator.bluetooth.getDevices()
         async function tryAutoConnect() {
-            const lastDeviceId = localStorage.getItem(LAST_DEVICE_KEY);
-            if (!lastDeviceId) { setStatusBox('TAP TO CONNECT', false); return; }
+            if (!navigator.bluetooth || !navigator.bluetooth.getDevices) {
+                return; // เบราว์เซอร์นี้ไม่รองรับ ต้องแตะเชื่อมต่อเอง (ปกติ)
+            }
             try {
-                bleDevice = await navigator.bluetooth.getDevice(lastDeviceId);
-                setStatusBox('AUTO-CONNECTING...', false);
-                bleServer = await bleDevice.gatt.connect();
-                const service = await bleServer.getPrimaryService(BLE_SERVICE_UUID);
-                bleChar = await service.getCharacteristic(BLE_CHAR_UUID);
-                gpsChar = await service.getCharacteristic(BLE_CHAR_GPS_UUID).catch(() => null);
-                
-                await bleChar.startNotifications();
-                bleChar.addEventListener('characteristicvaluechanged', onSensorData);
-                setStatusBox('CONNECTED', true);
-            } catch (e) {
-                console.log('[BLE] Auto-connect failed, clearing.');
-                localStorage.removeItem(LAST_DEVICE_KEY);
-                setStatusBox('TAP TO CONNECT', false);
+                const knownDevices = await navigator.bluetooth.getDevices();
+                if (knownDevices.length === 0) return; // ยังไม่เคยจับคู่มาก่อน
+                const lastId = localStorage.getItem(LAST_DEVICE_KEY);
+                bleDevice = knownDevices.find(d => d.id === lastId) || knownDevices[0];
+                bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+                await connectGatt();
+            } catch (err) {
+                console.log('Auto-connect ยังไม่สำเร็จ (จะลองใหม่เมื่ออุปกรณ์อยู่ในระยะ):', err);
+                setStatus('● TAP TO CONNECT', '#ff3b30', false);
             }
         }
 
-        function onSensorData(event) {
-            const dv = new DataView(event.target.value.buffer);
-            const rpm  = dv.getUint16(0, true);
+        function onDisconnected() {
+            setStatus('● LINK LOST - RECONNECTING...', '#ff3b30', false);
+            scheduleReconnect();
+        }
+
+        // ลองเชื่อมต่อใหม่อัตโนมัติทุก 2 วินาทีเมื่อสัญญาณหลุด (เช่น ออกนอกระยะ, ปิดสวิตช์กุญแจ)
+        // ใช้ bleDevice object เดิมได้เลย ไม่ต้องขอ permission ใหม่
+        function scheduleReconnect() {
+            if (reconnectTimer || !bleDevice) return;
+            reconnectTimer = setTimeout(async () => {
+                reconnectTimer = null;
+                try {
+                    await connectGatt();
+                } catch (err) {
+                    setStatus('● LINK LOST - RECONNECTING...', '#ff3b30', false);
+                    scheduleReconnect(); // ลองใหม่ต่อไปเรื่อยๆ จนกว่าจะเจออุปกรณ์
+                }
+            }, 2000);
+        }
+
+        // parse binary packet 10 ไบต์ ตรงกับ struct SensorPacket ฝั่ง firmware (little-endian)
+        function onDataReceived(event) {
+            const dv = event.target.value; // DataView
+            const rpm    = dv.getUint16(0, true);
             const tps    = dv.getInt16(2, true) / 10.0;
             const afr    = dv.getInt16(4, true) / 10.0;
             const eot    = dv.getInt16(6, true);
@@ -180,23 +209,21 @@
             document.getElementById('bat-val').innerText = bat.toFixed(1);
         }
 
+        // ต้องเชื่อมต่อผ่านการแตะ/คลิกของผู้ใช้เท่านั้น (ข้อบังคับด้าน security ของเบราว์เซอร์)
         statusBox.addEventListener('click', (e) => {
             e.stopPropagation();
             if (!statusBox.classList.contains('connected')) connectBLE();
         });
 
         // ==========================================
-        // GPS SMOOTHING (IMPROVED)
+        // GPS Speed feed — MSX125 ไม่มีความเร็วจาก K-line (ดู ECU_KLINE_PROTOCOL.md)
+        // เลยอ่านความเร็วจาก GPS ของมือถือแทน แล้วเขียนกลับไปที่ ESP32 ผ่าน BLE_CHAR_GPS_UUID
         // ==========================================
-        const GPS_SMOOTHING_ALPHA = 0.6;  // 0-1: ยิ่งต่ำ ยิ่งเรียบ (0.6 = เรียบพอประมาณ)
-        const GPS_WRITE_INTERVAL = 500;   // Write GPS ทุก 500ms
-        
         const gpsBox = document.getElementById('gps-box');
         let gpsWatchId = null;
         let gpsSending = false;
         let lastGpsWriteAt = 0;
-        let lastPos = null;
-        let lastKmhSent = 0;  // ← ตัวแปรใหม่ สำหรับเรียบ
+        let lastPos = null; // { lat, lon, t } — เก็บจุดก่อนหน้าไว้คำนวณความเร็วเองตอน coords.speed เป็น null
 
         function setGpsStatus(text, sending) {
             gpsBox.innerHTML = text + '<span class="sub">' + (sending ? 'TAP TO STOP' : 'TAP TO FEED SPEED') + '</span>';
@@ -206,27 +233,21 @@
         async function writeGpsSpeed(kmh) {
             if (!gpsChar) return;
             const buf = new ArrayBuffer(2);
-            new DataView(buf).setInt16(0, Math.round(kmh * 10), true);
+            new DataView(buf).setInt16(0, Math.round(kmh * 10), true); // km/h × 10, little-endian
             try {
-                if (gpsChar.properties.writeWithoutResponse) 
-                    await gpsChar.writeValueWithoutResponse(buf);
-                else 
-                    await gpsChar.writeValue(buf);
-            } catch (e) { /* error → skip */ }
+                if (gpsChar.properties.writeWithoutResponse) await gpsChar.writeValueWithoutResponse(buf);
+                else await gpsChar.writeValue(buf);
+            } catch (e) { /* พลาดรอบนี้ ข้ามไปรอบถัดไป ไม่ให้ทั้งแอปสะดุด */ }
         }
 
+        // ระยะทางระหว่างพิกัด 2 จุด (เมตร) — สูตร Haversine
         function haversineMeters(lat1, lon1, lat2, lon2) {
             const R = 6371000;
             const toRad = d => d * Math.PI / 180;
             const dLat = toRad(lat2 - lat1);
             const dLon = toRad(lon2 - lon1);
             const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            const dist = R * c;
-            
-            // ← เพิ่ม: ตัดค่า outlier (> 200 m/s ไม่สมควร)
-            if (dist > 200) return null;
-            return dist;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         }
 
         function onGpsPosition(pos) {
@@ -235,14 +256,12 @@
             let kmh = null;
 
             if (typeof speed === 'number' && !Number.isNaN(speed)) {
-                kmh = Math.max(0, speed * 3.6);
+                kmh = Math.max(0, speed * 3.6); // มือถือคำนวณให้แล้ว ใช้เลย (แม่นกว่า)
             } else if (lastPos) {
-                const dt = (nowTs - lastPos.t) / 1000;
-                if (dt > 0.2 && dt < 10) {
+                const dt = (nowTs - lastPos.t) / 1000; // วินาที
+                if (dt > 0.2 && dt < 10) { // กันค่าพัง ถ้าเว้นช่วงนานเกินไปหรือถี่เกินไป
                     const distM = haversineMeters(lastPos.lat, lastPos.lon, latitude, longitude);
-                    if (distM !== null) {  // ← ตรวจสอบ null
-                        kmh = Math.max(0, (distM / dt) * 3.6);
-                    }
+                    kmh = Math.max(0, (distM / dt) * 3.6); // สำรอง: คำนวณเองจากระยะทาง/เวลา
                 }
             }
             lastPos = { lat: latitude, lon: longitude, t: nowTs };
@@ -252,14 +271,10 @@
                 return;
             }
 
-            // ← เพิ่มบรรทัดนี้: Low-pass filter เพื่อเรียบความเร็ว
-            kmh = lastKmhSent * (1 - GPS_SMOOTHING_ALPHA) + kmh * GPS_SMOOTHING_ALPHA;
-            lastKmhSent = kmh;
-
             setGpsStatus('● GPS ' + Math.round(kmh) + ' KM/H', gpsSending);
 
             const now = Date.now();
-            if (gpsSending && bleServer && bleServer.connected && now - lastGpsWriteAt > GPS_WRITE_INTERVAL) {
+            if (gpsSending && bleServer && bleServer.connected && now - lastGpsWriteAt > 500) {
                 lastGpsWriteAt = now;
                 writeGpsSpeed(kmh);
             }
@@ -270,17 +285,12 @@
             gpsWatchId = navigator.geolocation.watchPosition(onGpsPosition, (err) => {
                 setGpsStatus('● GPS ERROR: ' + err.message, false);
                 gpsSending = false;
-            }, { 
-                enableHighAccuracy: true,    // ✅ เก็บ (แม่นกว่า)
-                maximumAge: 500,             // ↓ ลดเหลือ 500ms
-                timeout: 10000               // ↑ ให้เวลา 10 วิ
-            });
+            }, { enableHighAccuracy: true, maximumAge: 1000, timeout: 8000 });
         }
 
         function stopGpsWatch() {
             if (gpsWatchId != null) { navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId = null; }
             lastPos = null;
-            lastKmhSent = 0;  // ← รีเซ็ตตัว smoothing
         }
 
         gpsBox.addEventListener('click', (e) => {
@@ -288,7 +298,7 @@
             if (!navigator.geolocation) { setGpsStatus('● NO GPS SUPPORT', false); return; }
             gpsSending = !gpsSending;
             if (gpsSending) { startGpsWatch(); setGpsStatus('● GPS ...', true); }
-            else { stopGpsWatch(); setGpsStatus('● GPS OFF', false); }
+            else { setGpsStatus('● GPS OFF', false); }
         });
     </script>
 </body>
