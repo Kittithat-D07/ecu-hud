@@ -197,7 +197,7 @@ canvas#rpmCanvas {
 .dtc-hex{font-family:'Rajdhani',monospace; font-size:clamp(0.75rem,1.6vw,1rem); color:var(--accent2); letter-spacing:1px; word-break:break-all; line-height:1.6;}
 .dtc-hex:empty::before{content:'—'; color:#555;}
 
-#page-set{overflow-y:auto; width: 100%;}
+#page-set{overflow-y:auto; width: 100%; pointer-events: auto;}
 .set-section{margin-bottom:clamp(14px,2.6vw,22px); width: 100%;}
 .set-title{font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic; letter-spacing:2px; font-size:clamp(0.8rem,1.8vw,1rem); color:#999; margin-bottom:8px;}
 
@@ -208,13 +208,13 @@ canvas#rpmCanvas {
   margin: 0 auto 15px auto; display: block; object-fit: contain;
 }
 
-.theme-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(85px,1fr)); gap:clamp(6px,1.2vw,10px);}
+.theme-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(85px,1fr)); gap:clamp(6px,1.2vw,10px); pointer-events: auto;}
 .theme-swatch{
   border-radius:4px; padding:clamp(8px,1.5vw,12px) 4px; text-align:center; cursor:pointer;
   font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(0.6rem,1.2vw,0.8rem); letter-spacing:1px;
   border:2px solid transparent; transition:transform 0.1s;
-  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
   background: var(--panel); border-color: var(--frame); color: #aaa; display:flex; align-items:center; justify-content:center;
+  user-select: none; -webkit-user-select: none; pointer-events: auto;
 }
 .theme-swatch:active{transform:scale(0.96);}
 .theme-swatch.active{border-color:#fff; color:#fff; box-shadow:0 0 12px rgba(255,255,255,0.4);}
@@ -332,9 +332,10 @@ canvas#rpmCanvas {
 
 <script>
 document.body.addEventListener('click', function(e){
-  if (e.target.closest('#status-box, #gps-box, .theme-swatch, .switch, .mini-btn, .dtc-btn')) return;
+  const excluded = e.target.closest('#status-box, #gps-box, .theme-swatch[data-key], .switch, .mini-btn, .dtc-btn');
+  if (excluded) return;
   if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(()=>{}); }
-});
+}, false);
 
 // ─────────── ระบบ Swipe Navigation ───────────
 const pages = Array.from(document.querySelectorAll('.page'));
@@ -959,11 +960,20 @@ const GAUGES = [
 const GAUGE_KEY='ecu_hud_gauge';
 
 function applyGauge(key){
+  console.log('📊 Applying gauge:', key);
   currentGaugeType = GAUGES.find(x=>x.key===key) ? key : GAUGES[0].key;
   localStorage.setItem(GAUGE_KEY, currentGaugeType);
-  document.querySelectorAll('#gauge-grid .theme-swatch').forEach(s => {
-    s.classList.toggle('active', s.dataset.key===currentGaugeType);
-    s.style.background = s.classList.contains('active') ? currentThemeAccent : 'var(--panel)';
+  
+  const swatches = document.querySelectorAll('#gauge-grid .theme-swatch');
+  console.log('Found gauge swatches:', swatches.length);
+  swatches.forEach(s => {
+    const isActive = s.dataset.key === currentGaugeType;
+    s.classList.toggle('active', isActive);
+    s.style.background = isActive ? currentThemeAccent : 'var(--panel)';
+    if (isActive) {
+      s.style.borderColor = '#fff';
+      s.style.color = '#fff';
+    }
   });
   triggerDemoSweep(); 
 }
@@ -974,9 +984,23 @@ GAUGES.forEach(g=>{
   sw.className='theme-swatch'; 
   sw.dataset.key=g.key; 
   sw.textContent=g.name;
-  sw.addEventListener('click', (e)=>{ e.stopPropagation(); applyGauge(g.key); });
+  sw.addEventListener('click', (e)=>{ 
+    e.stopPropagation();
+    e.preventDefault();
+    applyGauge(g.key); 
+  }, false);
   gaugeGrid.appendChild(sw);
 });
+
+// Event delegation สำหรับ gauge
+gaugeGrid.addEventListener('click', (e)=>{
+  const swatch = e.target.closest('.theme-swatch[data-key]');
+  if (swatch) {
+    e.stopPropagation();
+    e.preventDefault();
+    applyGauge(swatch.dataset.key);
+  }
+}, false);
 
 // ─────────── Settings: THEMES ───────────
 const THEMES = [
@@ -990,6 +1014,7 @@ const THEMES = [
 const THEME_KEY='ecu_hud_theme';
 
 function applyTheme(key){
+  console.log('🎨 Applying theme:', key);
   const t = THEMES.find(x=>x.key===key) || THEMES[0];
   const root = document.documentElement.style;
   root.setProperty('--bg', t.bg); 
@@ -1001,9 +1026,17 @@ function applyTheme(key){
   root.setProperty('--accent2', t.accent2);
   currentThemeAccent = t.accent;
   localStorage.setItem(THEME_KEY, key);
-  document.querySelectorAll('#theme-grid .theme-swatch').forEach(s => {
-    s.classList.toggle('active', s.dataset.key===key);
-    s.style.background = s.classList.contains('active') ? t.accent : 'var(--panel)';
+  
+  const swatches = document.querySelectorAll('#theme-grid .theme-swatch');
+  console.log('Found swatches:', swatches.length);
+  swatches.forEach(s => {
+    const isActive = s.dataset.key === key;
+    s.classList.toggle('active', isActive);
+    s.style.background = isActive ? t.accent : 'var(--panel)';
+    if (isActive) {
+      s.style.borderColor = '#fff';
+      s.style.color = '#fff';
+    }
   });
   applyGauge(currentGaugeType); 
 }
@@ -1014,9 +1047,43 @@ THEMES.forEach(t=>{
   sw.className='theme-swatch'; 
   sw.dataset.key=t.key; 
   sw.textContent=t.name;
-  sw.addEventListener('click', (e)=>{ e.stopPropagation(); applyTheme(t.key); });
+  sw.addEventListener('click', (e)=>{ 
+    e.stopPropagation();
+    e.preventDefault();
+    applyTheme(t.key); 
+  }, false);
   themeGrid.appendChild(sw);
 });
+
+// Event delegation สำหรับ theme
+themeGrid.addEventListener('click', (e)=>{
+  const swatch = e.target.closest('.theme-swatch[data-key]');
+  if (swatch) {
+    e.stopPropagation();
+    e.preventDefault();
+    applyTheme(swatch.dataset.key);
+  }
+}, false);
+
+// Global fallback สำหรับ theme swatch ที่อยู่ใน #theme-grid
+document.addEventListener('click', (e)=>{
+  if (e.target.closest('#theme-grid .theme-swatch[data-key]')) {
+    const swatch = e.target.closest('.theme-swatch[data-key]');
+    if (swatch && swatch.parentElement?.id === 'theme-grid') {
+      e.stopPropagation();
+      e.preventDefault();
+      applyTheme(swatch.dataset.key);
+    }
+  }
+  if (e.target.closest('#gauge-grid .theme-swatch[data-key]')) {
+    const swatch = e.target.closest('.theme-swatch[data-key]');
+    if (swatch && swatch.parentElement?.id === 'gauge-grid') {
+      e.stopPropagation();
+      e.preventDefault();
+      applyGauge(swatch.dataset.key);
+    }
+  }
+}, true);
 
 applyTheme(localStorage.getItem(THEME_KEY) || 'carbon');
 applyGauge(localStorage.getItem(GAUGE_KEY) || 'superbike');
