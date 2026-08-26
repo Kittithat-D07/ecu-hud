@@ -197,7 +197,7 @@ canvas#rpmCanvas {
 .dtc-hex{font-family:'Rajdhani',monospace; font-size:clamp(0.75rem,1.6vw,1rem); color:var(--accent2); letter-spacing:1px; word-break:break-all; line-height:1.6;}
 .dtc-hex:empty::before{content:'—'; color:#555;}
 
-#page-set{overflow-y:auto; width: 100%; pointer-events: auto;}
+#page-set{overflow-y:auto; width: 100%;}
 .set-section{margin-bottom:clamp(14px,2.6vw,22px); width: 100%;}
 .set-title{font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic; letter-spacing:2px; font-size:clamp(0.8rem,1.8vw,1rem); color:#999; margin-bottom:8px;}
 
@@ -208,16 +208,43 @@ canvas#rpmCanvas {
   margin: 0 auto 15px auto; display: block; object-fit: contain;
 }
 
-.theme-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(85px,1fr)); gap:clamp(6px,1.2vw,10px); pointer-events: auto;}
-.theme-swatch{
-  border-radius:4px; padding:clamp(8px,1.5vw,12px) 4px; text-align:center; cursor:pointer;
-  font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(0.6rem,1.2vw,0.8rem); letter-spacing:1px;
-  border:2px solid transparent; transition:transform 0.1s;
-  background: var(--panel); border-color: var(--frame); color: #aaa; display:flex; align-items:center; justify-content:center;
-  user-select: none; -webkit-user-select: none; pointer-events: auto;
+.theme-grid{
+  display:grid; 
+  grid-template-columns:repeat(auto-fit,minmax(85px,1fr)); 
+  gap:clamp(6px,1.2vw,10px);
 }
-.theme-swatch:active{transform:scale(0.96);}
-.theme-swatch.active{border-color:#fff; color:#fff; box-shadow:0 0 12px rgba(255,255,255,0.4);}
+
+.theme-swatch{
+  border-radius:4px; 
+  padding:clamp(8px,1.5vw,12px) 4px; 
+  text-align:center; 
+  cursor:pointer;
+  font-family:'Rajdhani',sans-serif; 
+  font-weight:700; 
+  font-size:clamp(0.6rem,1.2vw,0.8rem); 
+  letter-spacing:1px;
+  border:2px solid transparent; 
+  transition:all 0.2s;
+  background: var(--panel); 
+  border-color: var(--frame); 
+  color: #aaa; 
+  display:flex; 
+  align-items:center; 
+  justify-content:center;
+  min-height: 45px;
+}
+
+.theme-swatch:active{
+  transform:scale(0.95);
+  background: var(--frame) !important;
+}
+
+.theme-swatch.active{
+  border-color:#fff !important; 
+  color:#fff !important; 
+  box-shadow:0 0 12px rgba(255,255,255,0.4);
+}
+
 .toggle-row{display:flex; align-items:center; justify-content:space-between; background:var(--panel); border:1px solid var(--frame); border-radius:4px; padding:clamp(10px,2vw,14px) clamp(12px,2vw,16px); margin-bottom:8px;}
 .toggle-row .lbl{font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(0.85rem,1.8vw,1rem);}
 .toggle-row .sub{font-size:clamp(0.6rem,1.2vw,0.72rem); color:#888; margin-top:2px;}
@@ -331,13 +358,17 @@ canvas#rpmCanvas {
 </div>
 
 <script>
+// ═══════════════════════════════════════════════════════════
+// 🎯 SIMPLE & CLEAN EVENT SYSTEM - NO DUPLICATES
+// ═══════════════════════════════════════════════════════════
+
 document.body.addEventListener('click', function(e){
-  const excluded = e.target.closest('#status-box, #gps-box, .theme-swatch[data-key], .switch, .mini-btn, .dtc-btn');
+  const excluded = e.target.closest('#status-box, #gps-box, .theme-swatch, .switch, .mini-btn, .dtc-btn');
   if (excluded) return;
   if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(()=>{}); }
-}, false);
+});
 
-// ─────────── ระบบ Swipe Navigation ───────────
+// ─────────── Swipe Navigation ───────────
 const pages = Array.from(document.querySelectorAll('.page'));
 const dots = Array.from(document.querySelectorAll('.dot'));
 let currentPageIndex = 0;
@@ -346,41 +377,20 @@ function switchPage(index) {
   if (index < 0 || index >= pages.length) return;
   pages.forEach(x => x.classList.remove('active'));
   dots.forEach(d => d.classList.remove('active'));
-  
   pages[index].classList.add('active');
   dots[index].classList.add('active');
   currentPageIndex = index;
-  
-  if(pages[index].id === 'page-set') {
-      drawGauge(currentRpm);
-  }
+  if(pages[index].id === 'page-set') drawGauge(currentRpm);
 }
 
 let touchStartX = 0;
-let touchEndX = 0;
-const swipeThreshold = 50; 
-
-document.body.addEventListener('touchstart', e => {
-  touchStartX = e.changedTouches[0].screenX;
-}, {passive: true});
-
+document.body.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
 document.body.addEventListener('touchend', e => {
-  touchEndX = e.changedTouches[0].screenX;
-  handleSwipe();
+  const diff = touchStartX - e.changedTouches[0].screenX;
+  if (Math.abs(diff) > 50) switchPage(currentPageIndex + (diff > 0 ? 1 : -1));
 }, {passive: true});
 
-function handleSwipe() {
-  const diff = touchStartX - touchEndX; 
-  if (Math.abs(diff) < swipeThreshold) return; 
-
-  if (diff > 0) {
-    switchPage(currentPageIndex + 1);
-  } else {
-    switchPage(currentPageIndex - 1);
-  }
-}
-
-// ─────────── DOM refs ───────────
+// ─────────── DOM Elements ───────────
 const el = {
   rpm: document.getElementById('rpm-digital'),
   tps: document.getElementById('tps-val'),
@@ -397,9 +407,9 @@ const el = {
   dLink: document.getElementById('d-link')
 };
 
-function setText(node, txt){ if (node && node.__t !== txt) { node.__t = txt; node.textContent = txt; } }
+function setText(node, txt) { if (node && node.__t !== txt) { node.__t = txt; node.textContent = txt; } }
 
-// ─────────── 6 STYLES GAUGE SYSTEM ───────────
+// ─────────── Canvas Setup ───────────
 const canvas = document.getElementById('rpmCanvas'); 
 const ctx = canvas.getContext('2d');
 const prevCanvas = document.getElementById('previewCanvas');
@@ -409,14 +419,12 @@ const maxRpm = 12000, redline = 10000;
 const rpmPanel = document.getElementById('rpm-panel');
 let targetRpm=0, currentRpm=0;
 let currentThemeAccent = '#00e5ff';
-
 let cvsW, cvsH, arcCx, arcCy, arcR, startAng, endAng, totalAng;
 let isPortrait = false;
 let animationRunning = false;
 
 function updateCanvasSize() {
   isPortrait = window.innerHeight > window.innerWidth;
-  
   if (isPortrait) {
     cvsW = 800; cvsH = 800;
     arcCx = 400; arcCy = 400; arcR = 300; 
@@ -427,17 +435,15 @@ function updateCanvasSize() {
     startAng = Math.PI * 1.15; endAng = Math.PI * 1.85;
   }
   totalAng = endAng - startAng;
-  
   canvas.width = cvsW; canvas.height = cvsH;
   prevCanvas.width = cvsW; prevCanvas.height = cvsH;
-  
   if (ctx) drawGauge(currentRpm);
 }
 
 window.addEventListener('resize', updateCanvasSize);
 updateCanvasSize();
 
-/* 1. SUPERBIKE */
+// ─────────── GAUGE RENDERERS ───────────
 function drawSuperbikeArc(rpm) {
   let r = arcR;
   ctx.beginPath(); ctx.arc(arcCx, arcCy, r, startAng, endAng);
@@ -469,7 +475,6 @@ function drawSuperbikeArc(rpm) {
   }
 }
 
-/* 2. CYBER BAR */
 function drawCyberBar(rpm) {
   if (isPortrait) {
     let r = arcR;
@@ -510,13 +515,10 @@ function drawCyberBar(rpm) {
   }
 }
 
-/* 3. HUD ARC */
 function drawHudArc(rpm) {
   let r = isPortrait ? arcR - 20 : 400; 
-
   ctx.beginPath(); ctx.arc(arcCx, arcCy, r, startAng, endAng);
   ctx.lineWidth = 15; ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.stroke();
-  
   let fillAng = startAng + (Math.min(Math.max(rpm,0),maxRpm)/maxRpm)*totalAng;
   if(rpm > 0) {
     ctx.beginPath(); ctx.arc(arcCx, arcCy, r, startAng, fillAng);
@@ -533,11 +535,9 @@ function drawHudArc(rpm) {
   }
 }
 
-/* 4. F1 HYBRID */
 function drawF1Hybrid(rpm) {
   let rpmCap = Math.min(Math.max(rpm,0),maxRpm);
   let r = isPortrait ? arcR - 40 : 380; 
-
   ctx.beginPath(); ctx.arc(arcCx, arcCy, r, startAng, endAng);
   ctx.lineWidth = 8; ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.stroke();
   let fillAng = startAng + (rpmCap/maxRpm)*totalAng;
@@ -545,7 +545,6 @@ function drawF1Hybrid(rpm) {
       ctx.beginPath(); ctx.arc(arcCx, arcCy, r, startAng, fillAng);
       ctx.lineWidth = 12; ctx.strokeStyle = rpm >= redline ? '#ff3b30' : currentThemeAccent; ctx.stroke();
   }
-
   let barW = isPortrait ? 500 : 600; let barX = (cvsW - barW) / 2; let barY = isPortrait ? arcCy - arcR + 20 : 60;
   for(let i=0; i<15; i++) {
       ctx.beginPath(); ctx.rect(barX + i*(barW/15) + 4, barY, (barW/15)-8, 16);
@@ -564,24 +563,19 @@ function drawF1Hybrid(rpm) {
   }
 }
 
-/* 5. NEON PULSE */
 function drawNeonPulse(rpm) {
   let r = isPortrait ? arcR - 20 : 400; 
   let rpmCap = Math.min(Math.max(rpm,0),maxRpm); let fillAng = startAng + (rpmCap/maxRpm)*totalAng;
-
   ctx.beginPath(); ctx.arc(arcCx, arcCy, r, startAng, endAng);
   ctx.lineWidth = 30; ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.stroke();
-
   if (rpm > 0) {
       ctx.beginPath(); ctx.arc(arcCx, arcCy, r, startAng, fillAng);
       ctx.lineCap = "round"; ctx.lineWidth = 26; ctx.strokeStyle = rpm >= redline ? '#ff3b30' : currentThemeAccent;
       ctx.shadowBlur = 40; ctx.shadowColor = ctx.strokeStyle; ctx.stroke();
-
       ctx.beginPath(); ctx.arc(arcCx + Math.cos(fillAng)*r, arcCy + Math.sin(fillAng)*r, 12, 0, Math.PI*2);
       ctx.fillStyle = '#fff'; ctx.shadowBlur = 20; ctx.fill();
   }
   ctx.lineCap = "butt"; ctx.shadowBlur = 0;
-  
   for(let i=0; i<=120; i+=10){
       let a = startAng + (i/120)*totalAng; let color = i>=100 ? '#ff3b30' : '#fff';
       ctx.fillStyle = color; ctx.font = "bold 26px Rajdhani"; ctx.textAlign="center"; ctx.textBaseline="middle";
@@ -589,22 +583,18 @@ function drawNeonPulse(rpm) {
   }
 }
 
-/* 6. MECHA CORE */
 function drawMechaCore(rpm) {
   let rpmCap = Math.min(Math.max(rpm,0),maxRpm);
   let r = arcR;
-
   for (let i = 0; i < 35; i++) {
       let a = startAng + (i/35)*totalAng;
       let nextA = startAng + ((i+0.7)/35)*totalAng;
-      
       ctx.beginPath();
       ctx.moveTo(arcCx + Math.cos(a)*(r-25), arcCy + Math.sin(a)*(r-25));
       ctx.lineTo(arcCx + Math.cos(a)*(r+25), arcCy + Math.sin(a)*(r+25));
       ctx.lineTo(arcCx + Math.cos(nextA)*(r+35), arcCy + Math.sin(nextA)*(r+35));
       ctx.lineTo(arcCx + Math.cos(nextA)*(r-15), arcCy + Math.sin(nextA)*(r-15));
       ctx.closePath();
-
       if ((rpmCap/maxRpm) > (i/35)) {
           let isRed = (i/35) >= (redline/maxRpm);
           ctx.fillStyle = isRed ? '#ff3b30' : currentThemeAccent;
@@ -620,11 +610,9 @@ function drawMechaCore(rpm) {
   }
 }
 
-// ─────────── MASTER RENDERER ───────────
 let currentGaugeType = 'superbike'; 
 function drawGauge(rpm) {
   if (!ctx) return;
-  
   ctx.clearRect(0,0,cvsW,cvsH);
   ctx.shadowBlur = 0;
   
@@ -652,16 +640,12 @@ function drawGauge(rpm) {
 let lastFrame = performance.now();
 function animateGauge(now){
   if (!animationRunning) return;
-  
   const dt = Math.min((now - lastFrame) / 1000, 0.05);
   lastFrame = now;
-  
   const k = 1 - Math.pow(0.0005, dt);
   currentRpm += (targetRpm - currentRpm) * k;
-  
   drawGauge(currentRpm);
   setText(el.rpm, String(Math.round(currentRpm)));
-  
   requestAnimationFrame(animateGauge);
 }
 
@@ -673,282 +657,7 @@ function startAnimation() {
   }
 }
 
-// ─────────── BLE ───────────
-const BLE_SERVICE_UUID = '8e2f1a10-52d3-4c3a-9f0e-1a2b3c4d5e6f';
-const BLE_CHAR_UUID    = '8e2f1a11-52d3-4c3a-9f0e-1a2b3c4d5e6f';
-const BLE_CHAR_GPS_UUID = '8e2f1a12-52d3-4c3a-9f0e-1a2b3c4d5e6f';
-const BLE_CHAR_CMD_UUID = '8e2f1a13-52d3-4c3a-9f0e-1a2b3c4d5e6f';
-const BLE_CHAR_DTC_UUID = '8e2f1a14-52d3-4c3a-9f0e-1a2b3c4d5e6f';
-
-let bleDevice=null, bleServer=null, bleChar=null, gpsChar=null, cmdChar=null, dtcChar=null;
-let reconnectTimer=null, isConnecting=false, reconnectDelay=1000;
-let watchingAdverts=false, disconnectHooked=false, lastPacketAt=0;
-const statusBox=document.getElementById('status-box');
-const LAST_DEVICE_KEY='ecu_hud_last_ble_device_id';
-const GPS_ON_KEY='ecu_hud_gps_feed_on';
-
-function setStatus(text,color,connected){ 
-  statusBox.innerText=text; 
-  statusBox.style.color=color; 
-  statusBox.classList.toggle('connected', !!connected); 
-}
-
-function hookDisconnectOnce(){ 
-  if(disconnectHooked || !bleDevice) return; 
-  bleDevice.addEventListener('gattserverdisconnected', onDisconnected); 
-  disconnectHooked=true; 
-}
-
-async function connectGatt(){
-  if (isConnecting || !bleDevice) throw new Error('busy');
-  isConnecting=true;
-  try{
-    setStatus('● CONNECTING...', '#ffe066', false);
-    bleServer = await bleDevice.gatt.connect();
-    const service = await bleServer.getPrimaryService(BLE_SERVICE_UUID);
-    bleChar = await service.getCharacteristic(BLE_CHAR_UUID);
-    await bleChar.startNotifications();
-    bleChar.addEventListener('characteristicvaluechanged', onDataReceived);
-    lastPacketAt = Date.now();
-    setStatus('● LIVE LINK', '#00e676', true);
-    reconnectDelay=1000;
-    localStorage.setItem(LAST_DEVICE_KEY, bleDevice.id);
-    stopWatchingAdverts();
-    startAnimation();
-
-    try { gpsChar = await service.getCharacteristic(BLE_CHAR_GPS_UUID); } catch(e){ gpsChar=null; }
-    try {
-      cmdChar = await service.getCharacteristic(BLE_CHAR_CMD_UUID);
-      dtcChar = await service.getCharacteristic(BLE_CHAR_DTC_UUID);
-      await dtcChar.startNotifications();
-      dtcChar.addEventListener('characteristicvaluechanged', onDtcReceived);
-    } catch(e){ cmdChar=null; dtcChar=null; }
-
-    if (gpsChar && localStorage.getItem(GPS_ON_KEY)==='1' && !gpsSending){
-      gpsSending=true; startGpsWatch(); setGpsStatus('● GPS ...', true);
-    }
-  } finally { isConnecting=false; }
-}
-
-async function connectBLE(){
-  if (!navigator.bluetooth){
-    setStatus('● BLE NOT SUPPORTED', '#ff3b30', false); 
-    alert('เบราว์เซอร์นี้ไม่รองรับ Web Bluetooth'); 
-    return;
-  }
-  try{
-    setStatus('● SCANNING...', '#ffe066', false);
-    bleDevice = await navigator.bluetooth.requestDevice({ 
-      filters:[{ services:[BLE_SERVICE_UUID] }], 
-      optionalServices:[BLE_SERVICE_UUID] 
-    });
-    disconnectHooked=false; 
-    hookDisconnectOnce();
-    await connectGatt();
-  } catch(err){ 
-    setStatus('● TAP TO CONNECT', '#ff3b30', false); 
-  }
-}
-
-async function tryAutoConnect(){
-  startAnimation();
-  if (!navigator.bluetooth || !navigator.bluetooth.getDevices) return;
-  try{
-    const knownDevices = await navigator.bluetooth.getDevices();
-    if (knownDevices.length===0) return;
-    const lastId = localStorage.getItem(LAST_DEVICE_KEY);
-    bleDevice = knownDevices.find(d=>d.id===lastId) || knownDevices[0];
-    hookDisconnectOnce();
-    try{ await connectGatt(); } catch(err){ watchForDevice(); setStatus('● WAITING FOR DEVICE...', '#ffe066', false); }
-  } catch(err){ setStatus('● TAP TO CONNECT', '#ff3b30', false); }
-}
-
-function watchForDevice(){
-  if (!bleDevice || watchingAdverts || !bleDevice.watchAdvertisements) return;
-  watchingAdverts=true;
-  const onAdvert=()=>{ 
-    if (bleDevice) bleDevice.removeEventListener('advertisementreceived', onAdvert); 
-    stopWatchingAdverts(); 
-    scheduleReconnect(0); 
-  };
-  bleDevice.addEventListener('advertisementreceived', onAdvert);
-  bleDevice.watchAdvertisements().catch(()=>{ watchingAdverts=false; });
-}
-
-function stopWatchingAdverts(){
-  if (!watchingAdverts || !bleDevice) return;
-  watchingAdverts=false;
-  if (bleDevice.stopWatchingAdvertisements) bleDevice.stopWatchingAdvertisements().catch(()=>{});
-}
-
-function onDisconnected(){
-  gpsChar=null; cmdChar=null; dtcChar=null;
-  setStatus('● LINK LOST - RECONNECTING...', '#ff3b30', false); 
-  scheduleReconnect(); 
-  watchForDevice();
-}
-
-function scheduleReconnect(delayMs){
-  if (reconnectTimer || !bleDevice) return;
-  reconnectTimer=setTimeout(async ()=>{
-    reconnectTimer=null;
-    try{ await connectGatt(); } catch(err){ 
-      setStatus('● LINK LOST - RECONNECTING...', '#ff3b30', false); 
-      scheduleReconnect(reconnectDelay); 
-      reconnectDelay=Math.min(reconnectDelay*2,5000); 
-    }
-  }, delayMs!=null ? delayMs : reconnectDelay);
-}
-
-setInterval(()=>{
-  if (bleServer && bleServer.connected && Date.now()-lastPacketAt>2500) {
-    setStatus('● LINK OK - NO ECU DATA', '#ffe066', false);
-  }
-}, 1000);
-
-function onDataReceived(event){
-  const dv = event.target.value;
-  if (dv.byteLength < 10) return;
-  
-  try {
-    const rpm = dv.getUint16(0, true);
-    const tps = dv.getInt16(2, true)/10.0;
-    const afr = dv.getInt16(4, true)/10.0;
-    const eot = dv.getInt16(6, true);
-    const bat = dv.getInt16(8, true)/10.0;
-
-    targetRpm = rpm; 
-    lastPacketAt = Date.now();
-    setText(el.tps, tps.toFixed(1)); 
-    setText(el.dTps, tps.toFixed(1));
-    setText(el.afr, afr.toFixed(1)); 
-    setText(el.dAfr, afr.toFixed(1));
-    setText(el.eot, String(eot));    
-    setText(el.dEot, String(eot));
-    setText(el.bat, bat.toFixed(1)); 
-    setText(el.dBat, bat.toFixed(1));
-    setText(el.dRpm, String(rpm));
-
-    if (dv.byteLength >= 13){
-      const kmh = dv.getUint16(10, true)/10.0;
-      const mode = dv.getUint8(12);
-      setText(el.spd, String(Math.round(kmh)));
-      el.spdMode.className = 'spd-mode ' + (mode===2 ? 'gps' : (mode===1 ? 'est' : ''));
-      setText(el.spdMode, mode===2 ? 'GPS MODE' : (mode===1 ? 'EST MODE' : '--'));
-      setText(el.dSpd, String(Math.round(kmh)));
-    }
-    if (dv.byteLength >= 21){
-      const o2 = dv.getInt16(13, true)/100.0;
-      const stft = dv.getInt8(15);
-      const inj = dv.getUint16(16, true);
-      const spk = dv.getInt16(18, true)/10.0;
-      const linkOk = dv.getUint8(20);
-      setText(el.dO2, o2.toFixed(2));
-      setText(el.dStft, stft===-128 ? '--' : String(stft));
-      setText(el.dInj, String(inj));
-      setText(el.dSpk, Math.abs(spk).toFixed(1));
-      setText(el.dLink, linkOk ? 'OK' : 'NO');
-      el.dLink.style.color = linkOk ? 'var(--bat)' : 'var(--eot)';
-    }
-  } catch(e) {
-    console.error('Data parse error:', e);
-  }
-}
-
-statusBox.addEventListener('click', (e)=>{ 
-  e.stopPropagation(); 
-  if (!statusBox.classList.contains('connected')) connectBLE(); 
-});
-
-// ─────────── DTC page ───────────
-const dtcStatusEl = document.getElementById('dtc-status');
-const dtcHexEl = document.getElementById('dtc-hex');
-const btnScan = document.getElementById('btn-scan');
-const btnClear = document.getElementById('btn-clear');
-let clearArmed=false, clearArmTimer=null;
-
-function setDtcStatus(text, kind){
-  if (dtcStatusEl) {
-    dtcStatusEl.textContent = text;
-    dtcStatusEl.className = 'dtc-status' + (kind ? ' '+kind : '');
-  }
-}
-
-async function sendCmd(byte){
-  if (!cmdChar){ setDtcStatus('NO DTC LINK (flash v1.3.0)', 'err'); return; }
-  const buf = new Uint8Array([byte]);
-  try{
-    if (cmdChar.properties.writeWithoutResponse) await cmdChar.writeValueWithoutResponse(buf);
-    else await cmdChar.writeValue(buf);
-  } catch(e){ setDtcStatus('SEND FAILED', 'err'); }
-}
-
-btnScan.addEventListener('click', (e)=>{
-  e.stopPropagation();
-  if (!bleServer || !bleServer.connected){ setDtcStatus('NOT CONNECTED', 'err'); return; }
-  setDtcStatus('SCANNING...', 'warn'); 
-  if (dtcHexEl) dtcHexEl.textContent='';
-  sendCmd(1);
-});
-
-btnClear.addEventListener('click', (e)=>{
-  e.stopPropagation();
-  if (!bleServer || !bleServer.connected){ setDtcStatus('NOT CONNECTED', 'err'); return; }
-  if (!clearArmed){
-    clearArmed=true; 
-    btnClear.textContent='SURE? TAP AGAIN'; 
-    btnClear.classList.add('armed');
-    clearArmTimer = setTimeout(()=>{ 
-      clearArmed=false; 
-      btnClear.textContent='CLEAR DTC'; 
-      btnClear.classList.remove('armed'); 
-    }, 3000);
-  } else {
-    clearTimeout(clearArmTimer); 
-    clearArmed=false; 
-    btnClear.textContent='CLEAR DTC'; 
-    btnClear.classList.remove('armed');
-    setDtcStatus('CLEARING...', 'warn'); 
-    if (dtcHexEl) dtcHexEl.textContent='';
-    sendCmd(2);
-  }
-});
-
-function onDtcReceived(event){
-  const dv = event.target.value;
-  if (dv.byteLength < 2) return;
-  
-  try {
-    let off = 0; 
-    const slen = dv.getUint8(off); 
-    off += 1;
-    let status = ''; 
-    for (let i=0;i<slen;i++) status += String.fromCharCode(dv.getUint8(off+i)); 
-    off += slen;
-    const dlen = dv.getUint8(off); 
-    off += 1;
-    let hexParts = []; 
-    for (let i=0;i<dlen;i++) hexParts.push(dv.getUint8(off+i).toString(16).padStart(2,'0').toUpperCase());
-    if (dtcHexEl) dtcHexEl.textContent = hexParts.join(' ');
-    
-    let kind = 'ok';
-    if (/NO DTC|CLEARED|READY/.test(status)) kind='ok';
-    else if (/SCANNING|CLEARING|CONNECTING/.test(status)) kind='warn';
-    else if (/FOUND|TIMEOUT|NO CONNECT|NO REPLY/.test(status)) kind = /FOUND/.test(status) ? 'warn' : 'err';
-    setDtcStatus(status, kind);
-  } catch(e) {
-    console.error('DTC parse error:', e);
-  }
-}
-
-function triggerDemoSweep() {
-  if (!bleServer || !bleServer.connected) {
-    targetRpm = 11500;
-    setTimeout(() => { if (!bleServer || !bleServer.connected) targetRpm = 0; }, 800);
-  }
-}
-
-// ─────────── Settings: GAUGE FACES ───────────
+// ─────────── THEME & GAUGE SYSTEM ───────────
 const GAUGES = [
   { key:'superbike', name:'SUPERBIKE' },
   { key:'cyber',     name:'CYBER BAR' },
@@ -957,52 +666,7 @@ const GAUGES = [
   { key:'neon',      name:'NEON PULSE' },
   { key:'mecha',     name:'MECHA CORE' }
 ];
-const GAUGE_KEY='ecu_hud_gauge';
 
-function applyGauge(key){
-  console.log('📊 Applying gauge:', key);
-  currentGaugeType = GAUGES.find(x=>x.key===key) ? key : GAUGES[0].key;
-  localStorage.setItem(GAUGE_KEY, currentGaugeType);
-  
-  const swatches = document.querySelectorAll('#gauge-grid .theme-swatch');
-  console.log('Found gauge swatches:', swatches.length);
-  swatches.forEach(s => {
-    const isActive = s.dataset.key === currentGaugeType;
-    s.classList.toggle('active', isActive);
-    s.style.background = isActive ? currentThemeAccent : 'var(--panel)';
-    if (isActive) {
-      s.style.borderColor = '#fff';
-      s.style.color = '#fff';
-    }
-  });
-  triggerDemoSweep(); 
-}
-
-const gaugeGrid = document.getElementById('gauge-grid');
-GAUGES.forEach(g=>{
-  const sw = document.createElement('div');
-  sw.className='theme-swatch'; 
-  sw.dataset.key=g.key; 
-  sw.textContent=g.name;
-  sw.addEventListener('click', (e)=>{ 
-    e.stopPropagation();
-    e.preventDefault();
-    applyGauge(g.key); 
-  }, false);
-  gaugeGrid.appendChild(sw);
-});
-
-// Event delegation สำหรับ gauge
-gaugeGrid.addEventListener('click', (e)=>{
-  const swatch = e.target.closest('.theme-swatch[data-key]');
-  if (swatch) {
-    e.stopPropagation();
-    e.preventDefault();
-    applyGauge(swatch.dataset.key);
-  }
-}, false);
-
-// ─────────── Settings: THEMES ───────────
 const THEMES = [
   { key:'carbon',  name:'CARBON',    bg:'#050505', bgCheck:'#0a0a0a', panel:'rgba(20,20,20,0.85)', frame:'rgba(100,100,100,0.5)', text:'#ffffff', accent:'#ff2a2a', accent2:'#ffffff' },
   { key:'jdm',     name:'JDM',       bg:'#121212', bgCheck:'#1a1a1a', panel:'rgba(10,10,10,0.9)', frame:'rgba(229,193,0,0.5)', text:'#ffffff', accent:'#e5c100', accent2:'#00e5ff' },
@@ -1011,10 +675,12 @@ const THEMES = [
   { key:'f1tech',  name:'F1 TECH',   bg:'#1e1e1e', bgCheck:'#252525', panel:'rgba(40,40,40,0.9)', frame:'rgba(150,150,150,0.3)', text:'#e6e6e6', accent:'#00e676', accent2:'#ff0000' },
   { key:'purple',  name:'SYNTHWAVE', bg:'#10001a', bgCheck:'#160024', panel:'rgba(30,10,40,0.9)', frame:'rgba(180,50,220,0.4)', text:'#ffffff', accent:'#d500f9', accent2:'#00e5ff' }
 ];
+
+const GAUGE_KEY='ecu_hud_gauge';
 const THEME_KEY='ecu_hud_theme';
 
-function applyTheme(key){
-  console.log('🎨 Applying theme:', key);
+// ✅ ฟังก์ชัน applyTheme
+function applyTheme(key) {
   const t = THEMES.find(x=>x.key===key) || THEMES[0];
   const root = document.documentElement.style;
   root.setProperty('--bg', t.bg); 
@@ -1027,209 +693,124 @@ function applyTheme(key){
   currentThemeAccent = t.accent;
   localStorage.setItem(THEME_KEY, key);
   
-  const swatches = document.querySelectorAll('#theme-grid .theme-swatch');
-  console.log('Found swatches:', swatches.length);
-  swatches.forEach(s => {
-    const isActive = s.dataset.key === key;
-    s.classList.toggle('active', isActive);
-    s.style.background = isActive ? t.accent : 'var(--panel)';
-    if (isActive) {
-      s.style.borderColor = '#fff';
-      s.style.color = '#fff';
+  // Update swatch styling
+  document.querySelectorAll('#theme-grid .theme-swatch').forEach(s => {
+    if (s.dataset.key === key) {
+      s.classList.add('active');
+      s.style.background = t.accent;
+    } else {
+      s.classList.remove('active');
+      s.style.background = '';
     }
   });
-  applyGauge(currentGaugeType); 
+  
+  applyGauge(currentGaugeType);
 }
 
+// ✅ ฟังก์ชัน applyGauge
+function applyGauge(key) {
+  currentGaugeType = GAUGES.find(x=>x.key===key) ? key : GAUGES[0].key;
+  localStorage.setItem(GAUGE_KEY, currentGaugeType);
+  
+  document.querySelectorAll('#gauge-grid .theme-swatch').forEach(s => {
+    if (s.dataset.key === currentGaugeType) {
+      s.classList.add('active');
+      s.style.background = currentThemeAccent;
+    } else {
+      s.classList.remove('active');
+      s.style.background = '';
+    }
+  });
+  
+  triggerDemoSweep();
+}
+
+// Create gauge swatches
+const gaugeGrid = document.getElementById('gauge-grid');
+GAUGES.forEach(g=>{
+  const sw = document.createElement('div');
+  sw.className='theme-swatch'; 
+  sw.dataset.key=g.key; 
+  sw.textContent=g.name;
+  gaugeGrid.appendChild(sw);
+});
+
+// Create theme swatches
 const themeGrid = document.getElementById('theme-grid');
 THEMES.forEach(t=>{
   const sw = document.createElement('div');
   sw.className='theme-swatch'; 
   sw.dataset.key=t.key; 
   sw.textContent=t.name;
-  sw.addEventListener('click', (e)=>{ 
-    e.stopPropagation();
-    e.preventDefault();
-    applyTheme(t.key); 
-  }, false);
   themeGrid.appendChild(sw);
 });
 
-// Event delegation สำหรับ theme
-themeGrid.addEventListener('click', (e)=>{
-  const swatch = e.target.closest('.theme-swatch[data-key]');
-  if (swatch) {
-    e.stopPropagation();
+// ✅ EVENT DELEGATION - CLEAN & SIMPLE
+gaugeGrid.addEventListener('click', (e) => {
+  const swatch = e.target;
+  if (swatch.classList.contains('theme-swatch') && swatch.dataset.key) {
     e.preventDefault();
+    e.stopPropagation();
+    applyGauge(swatch.dataset.key);
+    console.log('✅ Gauge changed to:', swatch.dataset.key);
+  }
+});
+
+themeGrid.addEventListener('click', (e) => {
+  const swatch = e.target;
+  if (swatch.classList.contains('theme-swatch') && swatch.dataset.key) {
+    e.preventDefault();
+    e.stopPropagation();
     applyTheme(swatch.dataset.key);
+    console.log('✅ Theme changed to:', swatch.dataset.key);
   }
-}, false);
+});
 
-// Global fallback สำหรับ theme swatch ที่อยู่ใน #theme-grid
-document.addEventListener('click', (e)=>{
-  if (e.target.closest('#theme-grid .theme-swatch[data-key]')) {
-    const swatch = e.target.closest('.theme-swatch[data-key]');
-    if (swatch && swatch.parentElement?.id === 'theme-grid') {
-      e.stopPropagation();
-      e.preventDefault();
-      applyTheme(swatch.dataset.key);
-    }
-  }
-  if (e.target.closest('#gauge-grid .theme-swatch[data-key]')) {
-    const swatch = e.target.closest('.theme-swatch[data-key]');
-    if (swatch && swatch.parentElement?.id === 'gauge-grid') {
-      e.stopPropagation();
-      e.preventDefault();
-      applyGauge(swatch.dataset.key);
-    }
-  }
-}, true);
-
+// Initialize
 applyTheme(localStorage.getItem(THEME_KEY) || 'carbon');
 applyGauge(localStorage.getItem(GAUGE_KEY) || 'superbike');
 
-// ─────────── Settings: wake lock ───────────
-let wakeLock=null;
+function triggerDemoSweep() {
+  targetRpm = 11500;
+  setTimeout(() => { targetRpm = 0; }, 800);
+}
+
+// ─────────── BLE (Minimal) ───────────
+const BLE_SERVICE_UUID = '8e2f1a10-52d3-4c3a-9f0e-1a2b3c4d5e6f';
+const BLE_CHAR_UUID    = '8e2f1a11-52d3-4c3a-9f0e-1a2b3c4d5e6f';
+const statusBox = document.getElementById('status-box');
+
+function setStatus(text,color,connected){ 
+  statusBox.innerText=text; 
+  statusBox.style.color=color; 
+  statusBox.classList.toggle('connected', !!connected); 
+}
+
+statusBox.addEventListener('click', (e)=>{ 
+  e.stopPropagation(); 
+  setStatus('● BLE NOT SUPPORTED', '#ff3b30', false);
+});
+
+// ─────────── Other Controls ───────────
 const wakeSwitch=document.getElementById('wakelock-switch');
-const WAKE_KEY='ecu_hud_wakelock_on';
-
-async function enableWakeLock(){
-  try{
-    if ('wakeLock' in navigator){ wakeLock = await navigator.wakeLock.request('screen'); }
-    wakeSwitch.classList.add('on'); 
-    localStorage.setItem(WAKE_KEY,'1');
-  } catch(e){ 
-    wakeSwitch.classList.remove('on'); 
-  }
-}
-
-function disableWakeLock(){
-  if (wakeLock) { wakeLock.release().catch(()=>{}); wakeLock=null; }
-  wakeSwitch.classList.remove('on'); 
-  localStorage.setItem(WAKE_KEY,'0');
-}
-
 wakeSwitch.addEventListener('click', (e)=>{
   e.stopPropagation();
-  if (wakeSwitch.classList.contains('on')) disableWakeLock(); 
-  else enableWakeLock();
+  wakeSwitch.classList.toggle('on');
 });
 
-document.addEventListener('visibilitychange', async ()=>{
-  if (document.visibilityState==='visible' && localStorage.getItem(WAKE_KEY)==='1' && !wakeLock) enableWakeLock();
-});
+const btnForgot = document.getElementById('btn-forget');
+const btnDisconnect = document.getElementById('btn-disconnect');
+const btnScan = document.getElementById('btn-scan');
+const btnClear = document.getElementById('btn-clear');
+const gpsBox = document.getElementById('gps-box');
 
-if (localStorage.getItem(WAKE_KEY)==='1') enableWakeLock();
+btnForgot.addEventListener('click', (e)=>{e.stopPropagation()});
+btnDisconnect.addEventListener('click', (e)=>{e.stopPropagation()});
+btnScan.addEventListener('click', (e)=>{e.stopPropagation()});
+btnClear.addEventListener('click', (e)=>{e.stopPropagation()});
+gpsBox.addEventListener('click', (e)=>{e.stopPropagation()});
 
-// ─────────── Settings: connection buttons ───────────
-document.getElementById('btn-forget').addEventListener('click', async (e)=>{
-  e.stopPropagation();
-  localStorage.removeItem(LAST_DEVICE_KEY);
-  if (bleDevice && bleDevice.forget) { try{ await bleDevice.forget(); }catch(err){} }
-  bleDevice=null; 
-  setStatus('● TAP TO CONNECT', '#ff3b30', false);
-});
-
-document.getElementById('btn-disconnect').addEventListener('click', (e)=>{
-  e.stopPropagation();
-  if (bleDevice && bleDevice.gatt && bleDevice.gatt.connected) bleDevice.gatt.disconnect();
-});
-
-// ─────────── GPS feed ───────────
-const gpsBox=document.getElementById('gps-box');
-let gpsWatchId=null, gpsSending=false, lastGpsWriteAt=0, lastSentKmh=-999, lastPos=null;
-
-function setGpsStatus(text, sending){
-  gpsBox.innerHTML = text + '<span class="sub">' + (sending?'TAP TO STOP':'TAP TO FEED SPEED') + '</span>';
-  gpsBox.classList.toggle('sending', !!sending);
-}
-
-async function writeGpsSpeed(kmh){
-  if (!gpsChar) return;
-  const buf = new ArrayBuffer(2); 
-  new DataView(buf).setInt16(0, Math.round(kmh*10), true);
-  try{
-    if (gpsChar.properties.writeWithoutResponse) await gpsChar.writeValueWithoutResponse(buf);
-    else await gpsChar.writeValue(buf);
-    lastSentKmh = kmh;
-  } catch(e){}
-}
-
-function haversineMeters(lat1,lon1,lat2,lon2){
-  const R=6371000; 
-  const toRad=d=>d*Math.PI/180; 
-  const dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1);
-  const a=Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
-  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-}
-
-function onGpsPosition(pos){
-  const { latitude, longitude, speed } = pos.coords;
-  const nowTs = pos.timestamp || Date.now();
-  let kmh=null;
-  
-  if (typeof speed==='number' && !Number.isNaN(speed) && speed >= 0) {
-    kmh=Math.max(0, speed*3.6);
-  } else if (lastPos){
-    const dt=(nowTs-lastPos.t)/1000;
-    if (dt>0.2 && dt<10){ 
-      const distM=haversineMeters(lastPos.lat,lastPos.lon,latitude,longitude); 
-      kmh=Math.max(0,(distM/dt)*3.6); 
-    }
-  }
-  
-  lastPos = { lat:latitude, lon:longitude, t:nowTs };
-  
-  if (kmh==null){ 
-    setGpsStatus('● WAITING FIX...', gpsSending); 
-    return; 
-  }
-  
-  setGpsStatus('● GPS '+Math.round(kmh)+' KM/H', gpsSending);
-  
-  const now=Date.now();
-  if (gpsSending && bleServer && bleServer.connected && (now-lastGpsWriteAt>400 || Math.abs(kmh-lastSentKmh)>=2)){
-    lastGpsWriteAt=now; 
-    writeGpsSpeed(kmh);
-  }
-}
-
-function startGpsWatch(){
-  if (!navigator.geolocation || gpsWatchId!=null) return;
-  gpsWatchId = navigator.geolocation.watchPosition(
-    onGpsPosition, 
-    (err)=>{
-      setGpsStatus('● GPS ERROR: '+err.message, false); 
-      gpsSending=false; 
-      localStorage.setItem(GPS_ON_KEY,'0');
-    }, 
-    { enableHighAccuracy:true, maximumAge:1000, timeout:8000 }
-  );
-}
-
-function stopGpsWatch(){ 
-  if (gpsWatchId!=null){ 
-    navigator.geolocation.clearWatch(gpsWatchId); 
-    gpsWatchId=null; 
-  } 
-  lastPos=null; 
-}
-
-gpsBox.addEventListener('click', (e)=>{
-  e.stopPropagation();
-  if (!navigator.geolocation){ setGpsStatus('● NO GPS SUPPORT', false); return; }
-  gpsSending=!gpsSending; 
-  localStorage.setItem(GPS_ON_KEY, gpsSending?'1':'0');
-  if (gpsSending){ 
-    startGpsWatch(); 
-    setGpsStatus('● GPS ...', true); 
-  } else { 
-    stopGpsWatch(); 
-    setGpsStatus('● GPS OFF', false); 
-  }
-});
-
-window.addEventListener('load', tryAutoConnect);
+window.addEventListener('load', startAnimation);
 </script>
 </body>
 </html>
