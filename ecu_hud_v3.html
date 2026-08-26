@@ -58,6 +58,7 @@ body{
   position:absolute; inset:0; display:none; flex-direction:column;
   padding:4px clamp(8px,2vw,16px) 8px; 
   animation: fadeIn 0.2s ease-out;
+  padding-bottom: 25px; /* เผื่อที่ให้จุดไข่ปลาด้านล่าง */
 }
 .page.active{display:flex;}
 
@@ -67,7 +68,7 @@ body{
 }
 
 /* ─────────── DASHBOARD (MOBILE OPTIMIZED FULLSCREEN) ─────────── */
-#page-dash { gap:clamp(8px,1.5vw,12px); padding-bottom: 8px;}
+#page-dash { gap:clamp(8px,1.5vw,12px); }
 
 .dash-screen {
   flex: 1; min-height: 0;
@@ -112,8 +113,8 @@ canvas#rpmCanvas {
 
 /* ─────────── CSS Layout ตามแนวตั้ง/แนวนอน ─────────── */
 @media screen and (orientation: portrait) {
-  .dash-gauge-wrapper { aspect-ratio: 1 / 1; max-width: 500px; height: auto;} /* จตุรัส 1:1 */
-  .dash-center-info { top: 50%; transform: translateY(-50%); } /* ให้อยู่กลางพอดี */
+  .dash-gauge-wrapper { aspect-ratio: 1 / 1; max-width: 500px; height: auto;} 
+  .dash-center-info { top: 50%; transform: translateY(-50%); } 
   
   .dash-speed { font-size: 22cqw; }
   .dash-speed-unit { font-size: 5cqw; }
@@ -121,7 +122,7 @@ canvas#rpmCanvas {
   .dash-rpm-unit { font-size: 3cqw; }
   .spd-mode { font-size: 3cqw; margin-top: 1cqw; }
 
-  #previewCanvas { aspect-ratio: 1 / 1; max-width: 250px; } /* Preview เป็น 1:1 ด้วย */
+  #previewCanvas { aspect-ratio: 1 / 1; max-width: 250px; } 
 }
 
 @media screen and (orientation: landscape) {
@@ -129,8 +130,8 @@ canvas#rpmCanvas {
   .dash-screen { flex: 1.8; } 
   .dash-bottom-cards { flex: 1; height: 100%; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); }
   
-  .dash-gauge-wrapper { aspect-ratio: 1000 / 560; max-width: 900px; height: 100%; width: auto;} /* กว้าง 16:9 */
-  .dash-center-info { top: 18cqw; } /* ดันลงมาหลบไฟกวาด */
+  .dash-gauge-wrapper { aspect-ratio: 1000 / 560; max-width: 900px; height: 100%; width: auto;} 
+  .dash-center-info { top: 18cqw; } 
   
   .dash-speed { font-size: 16cqw; }
   .dash-speed-unit { font-size: 3.5cqw; }
@@ -138,7 +139,7 @@ canvas#rpmCanvas {
   .dash-rpm-unit { font-size: 2.5cqw; }
   .spd-mode { font-size: 2.5cqw; margin-top: 1cqw; }
 
-  #previewCanvas { aspect-ratio: 1000 / 560; max-width: 450px; } /* Preview เป็น 16:9 ด้วย */
+  #previewCanvas { aspect-ratio: 1000 / 560; max-width: 450px; } 
 }
 
 /* การ์ดสถานะ */
@@ -165,7 +166,7 @@ canvas#rpmCanvas {
 .card-bat{border-top:3px solid var(--bat); background:linear-gradient(180deg, rgba(0,230,118,0.15) 0%, var(--panel) 80%);} 
 
 .header-title{font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic; font-size:clamp(0.85rem,2vw,1.1rem); letter-spacing:2px; line-height:1;}
-.header-sub{color:#777; font-size:clamp(0.6rem,1.2vw,0.75rem); margin-bottom:4px;}
+.header-sub{color:#777; font-size:clamp(0.55rem,1.2vw,0.75rem); margin-bottom:4px;}
 .tps-txt{color:var(--tps);} .afr-txt{color:var(--afr);} .eot-txt{color:var(--eot);} .bat-txt{color:var(--bat);}
 
 .card-value-wrap { display:flex; align-items:baseline; z-index:1; justify-content:center;}
@@ -183,6 +184,7 @@ canvas#rpmCanvas {
 }
 .data-tile .lbl{font-size:clamp(0.55rem,1.1vw,0.72rem); letter-spacing:1px; color:#aaa; font-family:'Rajdhani',sans-serif; font-weight:700;}
 .data-tile .val{font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic; font-size:clamp(1.2rem,3.4vw,2.1rem); text-align:right; line-height:1;}
+.data-tile.link .val{font-size:clamp(1rem,2.6vw,1.5rem);}
 
 /* ─────────── DTC page ─────────── */
 #page-dtc{gap:clamp(8px,1.6vw,16px); width: 100%;}
@@ -204,7 +206,7 @@ canvas#rpmCanvas {
 .dtc-hex:empty::before{content:'—'; color:#555;}
 
 /* ─────────── SETTINGS page & Preview ─────────── */
-#page-set{overflow-y:auto; width: 100%; padding-bottom: 20px;}
+#page-set{overflow-y:auto; width: 100%;}
 .set-section{margin-bottom:clamp(14px,2.6vw,22px); width: 100%;}
 .set-title{font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic; letter-spacing:2px; font-size:clamp(0.8rem,1.8vw,1rem); color:#999; margin-bottom:8px;}
 
@@ -236,19 +238,20 @@ canvas#rpmCanvas {
 .mini-btn{flex:1; padding:10px; border-radius:4px; border:1px solid var(--frame); background:var(--panel); color:var(--text); font-family:'Rajdhani',sans-serif; font-weight:700; letter-spacing:1px; font-size:clamp(0.75rem,1.6vw,0.9rem); text-align:center; cursor:pointer;}
 .mini-btn.danger{color:var(--eot); border-color:rgba(255,59,48,0.5);}
 
-/* วงกลมบอกหน้า 4 จุด */
+/* จุดไข่ปลาบอกหน้าปัจจุบัน */
 .page-indicators {
-  position: absolute; bottom: 5px; left: 0; width: 100%; display: flex; justify-content: center; gap: 8px; z-index: 50;
+  position: absolute; bottom: calc(env(safe-area-inset-bottom) + 5px); left: 0; width: 100%; display: flex; justify-content: center; gap: 8px; z-index: 50; pointer-events: none;
 }
-.dot { width: 8px; height: 8px; border-radius: 50%; background: #555; transition: background 0.3s; }
-.dot.active { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: #444; transition: background 0.3s, transform 0.2s; }
+.dot.active { background: var(--accent); transform: scale(1.3); box-shadow: 0 0 6px var(--accent); }
+
 </style>
 </head>
 <body>
 
 <div id="topbar">
   <div id="status-box">● TAP TO CONNECT</div>
-  <div style="font-size:0.6rem; color:#888; letter-spacing:1px;">&lt;&lt; SWIPE &gt;&gt;</div>
+  <div style="font-size:0.6rem; color:#666; letter-spacing:1px; pointer-events:none;">&lt;&lt; SWIPE &gt;&gt;</div>
   <div id="gps-box">● GPS OFF<span class="sub">TAP TO FEED SPEED</span></div>
 </div>
 
@@ -308,7 +311,7 @@ canvas#rpmCanvas {
   <!-- SETTINGS -->
   <div class="page" id="page-set">
     <div class="set-section" style="text-align:center;">
-      <div class="set-title" style="margin-bottom:12px;">LIVE PREVIEW (จอตัวอย่าง)</div>
+      <div class="set-title" style="margin-bottom:12px;">LIVE PREVIEW</div>
       <canvas id="previewCanvas"></canvas>
     </div>
 
@@ -357,25 +360,40 @@ function switchPage(index) {
   if (index < 0 || index >= pages.length) return;
   pages.forEach(x => x.classList.remove('active'));
   dots.forEach(d => d.classList.remove('active'));
+  
   pages[index].classList.add('active');
   dots[index].classList.add('active');
   currentPageIndex = index;
-  if(pages[index].id === 'page-set') drawGauge(currentRpm);
+  
+  if(pages[index].id === 'page-set') {
+      drawGauge(currentRpm);
+  }
 }
 
-// Swipe Gestures Logic
-let touchStartX = 0; let touchEndX = 0; const swipeThreshold = 60; 
-const pagesContainer = document.getElementById('pages');
+// Swipe Gestures
+let touchStartX = 0;
+let touchEndX = 0;
+const swipeThreshold = 50; 
 
-pagesContainer.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
-pagesContainer.addEventListener('touchend', e => {
-  touchEndX = e.changedTouches[0].screenX;
-  const diff = touchStartX - touchEndX; 
-  if (Math.abs(diff) > swipeThreshold) {
-    if (diff > 0) switchPage(currentPageIndex + 1); // ปัดซ้าย
-    else switchPage(currentPageIndex - 1); // ปัดขวา
-  }
+document.body.addEventListener('touchstart', e => {
+  touchStartX = e.changedTouches[0].screenX;
 }, {passive: true});
+
+document.body.addEventListener('touchend', e => {
+  touchEndX = e.changedTouches[0].screenX;
+  handleSwipe();
+}, {passive: true});
+
+function handleSwipe() {
+  const diff = touchStartX - touchEndX; 
+  if (Math.abs(diff) < swipeThreshold) return; 
+
+  if (diff > 0) {
+    switchPage(currentPageIndex + 1); // ปัดซ้าย
+  } else {
+    switchPage(currentPageIndex - 1); // ปัดขวา
+  }
+}
 
 // ─────────── DOM refs ───────────
 const el = {
@@ -409,17 +427,15 @@ let currentThemeAccent = '#00e5ff';
 let cvsW, cvsH, arcCx, arcCy, arcR, startAng, endAng, totalAng;
 let isPortrait = false;
 
-// ฟังก์ชันอัปเดตสัดส่วนจอ (วาดวงกลมเมื่อแนวตั้ง วาดโค้งเมื่อแนวนอน)
+// คำนวณขนาดและสัดส่วนใหม่เมื่อหมุนจอ
 function updateCanvasSize() {
   isPortrait = window.innerHeight > window.innerWidth;
   
   if (isPortrait) {
-    // แนวตั้ง: วาดเป็นเกือบเต็มวงกลม
     cvsW = 800; cvsH = 800;
     arcCx = 400; arcCy = 400; arcR = 300; 
     startAng = Math.PI * 0.75; endAng = Math.PI * 2.25;
   } else {
-    // แนวนอน: วาดเป็นส่วนโค้งด้านบน
     cvsW = 1000; cvsH = 560;
     arcCx = 500; arcCy = 520; arcR = 440; 
     startAng = Math.PI * 1.15; endAng = Math.PI * 1.85;
@@ -465,7 +481,7 @@ function drawSuperbikeArc(rpm) {
   }
 }
 
-/* 2. CYBER BAR (ถ้าเป็นแนวตั้งจะแปลงร่างเป็นวงกลมล้ำๆ อัตโนมัติ) */
+/* 2. CYBER BAR (ปรับเป็นวงกลมล้ำๆ อัตโนมัติเมื่อแนวตั้ง) */
 function drawCyberBar(rpm) {
   if (isPortrait) {
     let r = arcR;
@@ -487,7 +503,6 @@ function drawCyberBar(rpm) {
       }
     }
   } else {
-    // แนวนอนวาดเป็นบาร์
     let pad = 100; let sx = pad; let w = cvsW - (pad*2); let sy = 400; let h = 60; let skew = 50;
     ctx.fillStyle = 'rgba(255,255,255,0.05)';
     ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx+w, sy); ctx.lineTo(sx+w+skew, sy-h); ctx.lineTo(sx+skew, sy-h); ctx.fill();
@@ -1002,6 +1017,7 @@ gpsBox.addEventListener('click', (e)=>{
   if (gpsSending){ startGpsWatch(); setGpsStatus('● GPS ...', true); } else { stopGpsWatch(); setGpsStatus('● GPS OFF', false); }
 });
 
+window.addEventListener('load', tryAutoConnect);
 </script>
 </body>
 </html>
