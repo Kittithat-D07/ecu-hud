@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ECU Smooth HUD 12K (BLE)</title>
+    <title>ECU Smooth HUD 12K (BLE) v2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&family=Rajdhani:wght@500;700&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
@@ -14,6 +14,9 @@
         .rpm-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; width: 100%; }
         .rpm-center .val { font-family: 'Rajdhani', sans-serif; font-size: 5rem; font-weight: 700; color: #fff; line-height: 0.9; text-shadow: 0 0 15px rgba(0, 229, 255, 0.6); letter-spacing: -2px; }
         .rpm-center .unit { font-size: 1.2rem; color: #aaa; font-weight: 700; letter-spacing: 4px; margin-top: 5px; }
+        .rpm-center .spd { font-family: 'Rajdhani', sans-serif; font-size: 1.4rem; font-weight: 700; color: #555; letter-spacing: 2px; margin-top: 8px; }
+        .rpm-center .spd.gps { color: #00e676; text-shadow: 0 0 10px rgba(0, 230, 118, 0.5); }
+        .rpm-center .spd.est { color: #ffe066; text-shadow: 0 0 10px rgba(255, 224, 102, 0.4); }
         .right-panel { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 15px; }
         .card { background: rgba(15, 15, 15, 0.9); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: inset 0 0 20px rgba(0,0,0,0.8); backdrop-filter: blur(4px); }
         .card-header-box { padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
@@ -32,7 +35,7 @@
         #gps-box { position: absolute; top: 15px; right: 15px; font-family: 'Rajdhani', sans-serif; font-size: 1rem; color: #666; font-weight: bold; letter-spacing: 2px; z-index: 10; cursor: pointer; text-align: right; }
         #gps-box.sending { color: #d500f9; }
         #gps-box .sub { display: block; font-size: 0.6rem; color: #777; letter-spacing: 1px; font-weight: 500; margin-top: 2px; }
-        @media screen and (orientation: portrait) { .dashboard { flex-direction: column; } .left-panel { flex: 1.2; padding: 10px; } .right-panel { flex: 1; gap: 10px; } canvas { max-width: 280px; } .rpm-center .val { font-size: 4rem; } .card-value { font-size: 3rem; } }
+        @media screen and (orientation: portrait) { .dashboard { flex-direction: column; } .left-panel { flex: 1.2; padding: 10px; } .right-panel { flex: 1; gap: 10px; } canvas { max-width: 280px; } .rpm-center .val { font-size: 4rem; } .card-value { font-size: 3rem; } .rpm-center .spd { font-size: 1.1rem; } }
     </style>
 </head>
 <body>
@@ -44,6 +47,7 @@
             <div class="rpm-center">
                 <div id="rpm-digital" class="val">0</div>
                 <div class="unit">RPM</div>
+                <div id="spd-digital" class="spd">-- KM/H</div>
             </div>
         </div>
         <div class="right-panel">
@@ -54,35 +58,28 @@
         </div>
     </div>
     <script>
-        // --- 1. จัดการ Fullscreen และ Wake Lock (ป้องกันจอดับ) ---
-        let wakeLock = null;
-        async function requestWakeLock() {
-            try {
-                if ('wakeLock' in navigator) {
-                    wakeLock = await navigator.wakeLock.request('screen');
-                }
-            } catch (err) { console.log('Wake Lock Error:', err); }
-        }
-        
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') requestWakeLock();
-        });
-
         document.body.addEventListener('click', function(e) {
-            if (e.target.id === 'status-box') return; 
-            if (!document.fullscreenElement && document.documentElement.requestFullscreen) { 
-                document.documentElement.requestFullscreen().catch(err => console.log(err)); 
-            }
-            requestWakeLock(); // ขอไม่ให้จอดับเมื่อมีการแตะหน้าจอ
+            if (e.target.id === 'status-box') return; // อย่าให้ปุ่มเชื่อมต่อไปสั่ง fullscreen ด้วย
+            if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(err => console.log(err)); }
         });
 
-        // --- 2. วาด Gauge RPM (คงเดิม) ---
-        const canvas = document.getElementById('rpmCanvas'); const ctx = canvas.getContext('2d'); const cx = canvas.width / 2; const cy = canvas.height / 2; const r = 160; 
-        const startAng = Math.PI * 0.8; const endAng = Math.PI * 2.2; const totalAng = endAng - startAng; 
-        const maxRpm = 12000; const redline = 10000; 
+        // ─── เก็บ DOM ไว้ใช้ซ้ำ ไม่ค้นหาใหม่ทุกเฟรม ───
+        const el = {
+            rpm: document.getElementById('rpm-digital'),
+            tps: document.getElementById('tps-val'),
+            afr: document.getElementById('afr-val'),
+            eot: document.getElementById('eot-val'),
+            bat: document.getElementById('bat-val'),
+            spd: document.getElementById('spd-digital')
+        };
+        // เขียน text เฉพาะตอนค่าเปลี่ยนจริง ลดงาน repaint
+        function setText(node, txt) { if (node.__t !== txt) { node.__t = txt; node.textContent = txt; } }
+
+        const canvas = document.getElementById('rpmCanvas'); const ctx = canvas.getContext('2d'); const cx = canvas.width / 2; const cy = canvas.height / 2; const r = 160;
+        const startAng = Math.PI * 0.8; const endAng = Math.PI * 2.2; const totalAng = endAng - startAng;
+        const maxRpm = 12000; const redline = 10000;
         const rpmPanel = document.getElementById('rpm-panel');
         let targetRpm = 0; let currentRpm = 0;
-
         function drawGauge(rpm) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.beginPath(); ctx.arc(cx, cy, r - 5, startAng + (redline/maxRpm)*totalAng, endAng); ctx.strokeStyle = 'rgba(255, 0, 0, 0.15)'; ctx.lineWidth = 30; ctx.stroke();
@@ -94,19 +91,29 @@
             ctx.beginPath(); ctx.arc(cx, cy, r + 12, startAng, endAng); ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'; ctx.lineWidth = 8; ctx.stroke();
             let rpmCap = Math.min(Math.max(rpm, 0), maxRpm); let curAng = startAng + (rpmCap / maxRpm) * totalAng;
             if (rpm > 0) {
-                ctx.beginPath(); ctx.arc(cx, cy, r + 12, startAng, curAng); 
-                let grad = ctx.createLinearGradient(0, canvas.height, canvas.width, 0); grad.addColorStop(0, '#00e5ff'); grad.addColorStop(0.5, '#d500f9'); grad.addColorStop(1, '#ff3b30'); 
+                ctx.beginPath(); ctx.arc(cx, cy, r + 12, startAng, curAng);
+                let grad = ctx.createLinearGradient(0, canvas.height, canvas.width, 0); grad.addColorStop(0, '#00e5ff'); grad.addColorStop(0.5, '#d500f9'); grad.addColorStop(1, '#ff3b30');
                 ctx.strokeStyle = grad; ctx.lineWidth = 8; ctx.lineCap = "round"; ctx.shadowColor = (rpm >= redline) ? '#ff3b30' : '#d500f9'; ctx.shadowBlur = 15; ctx.stroke(); ctx.shadowBlur = 0;
                 let tipX = cx + Math.cos(curAng) * (r + 12); let tipY = cy + Math.sin(curAng) * (r + 12);
                 ctx.beginPath(); ctx.arc(tipX, tipY, 6, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.shadowColor = '#fff'; ctx.shadowBlur = 10; ctx.fill(); ctx.shadowBlur = 0;
             }
-            if (rpm >= redline) { rpmPanel.style.boxShadow = "inset 0 0 60px rgba(255, 0, 0, 0.8)"; rpmPanel.style.borderColor = "rgba(255, 0, 0, 0.8)"; rpmPanel.style.background = "radial-gradient(circle at center, rgba(255, 0, 0, 0.3) 0%, rgba(10, 10, 12, 0.95) 70%)"; } 
+            if (rpm >= redline) { rpmPanel.style.boxShadow = "inset 0 0 60px rgba(255, 0, 0, 0.8)"; rpmPanel.style.borderColor = "rgba(255, 0, 0, 0.8)"; rpmPanel.style.background = "radial-gradient(circle at center, rgba(255, 0, 0, 0.3) 0%, rgba(10, 10, 12, 0.95) 70%)"; }
             else { rpmPanel.style.boxShadow = "inset 0 0 40px rgba(0, 0, 0, 1)"; rpmPanel.style.borderColor = "rgba(100, 100, 100, 0.3)"; rpmPanel.style.background = "radial-gradient(circle at center, rgba(0, 229, 255, 0.15) 0%, rgba(213, 0, 249, 0.05) 40%, rgba(10, 10, 12, 0.95) 70%)"; }
         }
-        function animateGauge() { currentRpm += (targetRpm - currentRpm) * 0.15; drawGauge(currentRpm); document.getElementById('rpm-digital').innerText = Math.round(currentRpm); requestAnimationFrame(animateGauge); }
-        window.addEventListener('load', () => { animateGauge(); tryAutoConnect(); requestWakeLock(); });
+        // ปรับเข็มแบบอิงเวลาจริง (time-based) ความเร็วตอบสนองเท่ากันทุกอัตราเฟรม จอ 60/90/120Hz
+        let lastFrame = performance.now();
+        function animateGauge(now) {
+            const dt = Math.min((now - lastFrame) / 1000, 0.05); lastFrame = now;
+            const k = 1 - Math.pow(0.0005, dt); // ~0.12 ต่อเฟรมที่ 60Hz — นุ่มแต่ไวกว่าเดิมเล็กน้อย
+            currentRpm += (targetRpm - currentRpm) * k;
+            drawGauge(currentRpm);
+            setText(el.rpm, String(Math.round(currentRpm)));
+            requestAnimationFrame(animateGauge);
+        }
 
-        // --- 3. จัดการ BLE แบบทนทาน (Robust BLE) ---
+        // ==========================================
+        // Web Bluetooth — UUID ตรงกับฝั่ง firmware v1.2.0+
+        // ==========================================
         const BLE_SERVICE_UUID = '8e2f1a10-52d3-4c3a-9f0e-1a2b3c4d5e6f';
         const BLE_CHAR_UUID    = '8e2f1a11-52d3-4c3a-9f0e-1a2b3c4d5e6f';
         const BLE_CHAR_GPS_UUID = '8e2f1a12-52d3-4c3a-9f0e-1a2b3c4d5e6f';
@@ -115,9 +122,15 @@
         let bleServer = null;
         let bleChar = null;
         let gpsChar = null;
-        let isReconnecting = false;
+        let reconnectTimer = null;
+        let isConnecting = false;          // กันเรียก gatt.connect ซ้อนกัน (สาเหตุ "GATT operation in progress")
+        let reconnectDelay = 1000;         // backoff 1s→2s→4s→5s กันยิงถี่จน BLE ล่ม
+        let watchingAdverts = false;
+        let disconnectHooked = false;
+        let lastPacketAt = 0;              // เวลา packet ล่าสุด — ใช้เช็คข้อมูลค้าง
         const statusBox = document.getElementById('status-box');
         const LAST_DEVICE_KEY = 'ecu_hud_last_ble_device_id';
+        const GPS_ON_KEY = 'ecu_hud_gps_feed_on';
 
         function setStatus(text, color, connected) {
             statusBox.innerText = text;
@@ -125,34 +138,52 @@
             statusBox.classList.toggle('connected', !!connected);
         }
 
-        async function connectGatt() {
-            setStatus('● CONNECTING...', '#ffe066', false);
-            
-            // ล้างค่าเก่าทิ้งก่อนเชื่อมใหม่ ป้องกัน Stale Reference
-            if (bleServer && bleServer.connected) bleServer.disconnect();
-            
-            bleServer = await bleDevice.gatt.connect();
-            const service = await bleServer.getPrimaryService(BLE_SERVICE_UUID);
-            
-            bleChar = await service.getCharacteristic(BLE_CHAR_UUID);
-            await bleChar.startNotifications();
-            bleChar.addEventListener('characteristicvaluechanged', onDataReceived);
-            
-            setStatus('● LIVE LINK', '#00e676', true);
-            localStorage.setItem(LAST_DEVICE_KEY, bleDevice.id);
-            isReconnecting = false; // เชื่อมต่อสำเร็จ รีเซ็ตสถานะ
+        function hookDisconnectOnce() {
+            // ต้อง hook listener ครั้งเดียวต่อ device — เดิม hook ซ้ำทุกรอบทำให้ onDisconnected ยิงหลายครั้ง
+            if (disconnectHooked || !bleDevice) return;
+            bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+            disconnectHooked = true;
+        }
 
+        async function connectGatt() {
+            if (isConnecting || !bleDevice) throw new Error('busy');
+            isConnecting = true;
             try {
-                gpsChar = await service.getCharacteristic(BLE_CHAR_GPS_UUID);
-            } catch (e) {
-                gpsChar = null;
+                setStatus('● CONNECTING...', '#ffe066', false);
+                bleServer = await bleDevice.gatt.connect();
+                const service = await bleServer.getPrimaryService(BLE_SERVICE_UUID);
+                bleChar = await service.getCharacteristic(BLE_CHAR_UUID);
+                await bleChar.startNotifications();
+                bleChar.addEventListener('characteristicvaluechanged', onDataReceived);
+                lastPacketAt = Date.now();
+                setStatus('● LIVE LINK', '#00e676', true);
+                reconnectDelay = 1000; // ต่อได้แล้ว รีเซ็ตความถี่ลองใหม่
+                localStorage.setItem(LAST_DEVICE_KEY, bleDevice.id);
+                stopWatchingAdverts();
+
+                // GPS characteristic — firmware รุ่นเก่าอาจไม่มี ไม่ให้ล้มทั้งการเชื่อมต่อ
+                try {
+                    gpsChar = await service.getCharacteristic(BLE_CHAR_GPS_UUID);
+                } catch (e) {
+                    gpsChar = null;
+                    console.log('ไม่พบ GPS characteristic บน firmware นี้ (flash v1.2.0 ขึ้นไปเพื่อใช้ครบ)');
+                }
+
+                // เคยเปิดส่ง GPS ไว้ → เปิดให้เองหลัง reconnect ไม่ต้องมากดใหม่
+                if (gpsChar && localStorage.getItem(GPS_ON_KEY) === '1' && !gpsSending) {
+                    gpsSending = true;
+                    startGpsWatch();
+                    setGpsStatus('● GPS ...', true);
+                }
+            } finally {
+                isConnecting = false;
             }
         }
 
         async function connectBLE() {
             if (!navigator.bluetooth) {
                 setStatus('● BLE NOT SUPPORTED', '#ff3b30', false);
-                alert('เบราว์เซอร์นี้ไม่รองรับ Web Bluetooth');
+                alert('เบราว์เซอร์นี้ไม่รองรับ Web Bluetooth (บน iOS ให้ใช้แอปเบราว์เซอร์ เช่น Bluefy)');
                 return;
             }
             try {
@@ -161,7 +192,8 @@
                     filters: [{ services: [BLE_SERVICE_UUID] }],
                     optionalServices: [BLE_SERVICE_UUID]
                 });
-                bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+                disconnectHooked = false;
+                hookDisconnectOnce();
                 await connectGatt();
             } catch (err) {
                 console.error('BLE connect error:', err);
@@ -169,59 +201,101 @@
             }
         }
 
+        // Auto-connect ตอนเปิดหน้าเว็บด้วยอุปกรณ์ที่เคยอนุญาตไว้ (Chrome/Edge รุ่นใหม่)
         async function tryAutoConnect() {
+            requestAnimationFrame(animateGauge);
             if (!navigator.bluetooth || !navigator.bluetooth.getDevices) return;
             try {
                 const knownDevices = await navigator.bluetooth.getDevices();
-                if (knownDevices.length === 0) return; 
+                if (knownDevices.length === 0) return;
                 const lastId = localStorage.getItem(LAST_DEVICE_KEY);
                 bleDevice = knownDevices.find(d => d.id === lastId) || knownDevices[0];
-                bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
-                await connectGatt();
+                hookDisconnectOnce();
+                try {
+                    await connectGatt();
+                } catch (err) {
+                    // ESP ยังไม่เปิด/อยู่นอกระยะ — รอฟังโฆษณาแทนการรีดึงยาวๆ
+                    watchForDevice();
+                    setStatus('● WAITING FOR DEVICE...', '#ffe066', false);
+                }
             } catch (err) {
+                console.log('Auto-connect ไม่สำเร็จ:', err);
                 setStatus('● TAP TO CONNECT', '#ff3b30', false);
             }
         }
 
+        // รอฟังโฆษณา BLE จาก ESP — เมื่อได้ยินเสียง = อุปกรณ์อยู่ในระยะแล้ว ค่อยต่อทันที
+        // (แม่นและเบากว่าการลอง gatt.connect ทุก 2 วินาทีเปล่าๆ)
+        function watchForDevice() {
+            if (!bleDevice || watchingAdverts || !bleDevice.watchAdvertisements) return;
+            watchingAdverts = true;
+            const onAdvert = () => {
+                bleDevice.removeEventListener('advertisementreceived', onAdvert);
+                stopWatchingAdverts();
+                scheduleReconnect(0); // เจอแล้ว ต่อเลยไม่ต้องรอ
+            };
+            bleDevice.addEventListener('advertisementreceived', onAdvert);
+            bleDevice.watchAdvertisements().catch(() => { watchingAdverts = false; });
+        }
+        function stopWatchingAdverts() {
+            if (!watchingAdverts || !bleDevice) return;
+            watchingAdverts = false;
+            if (bleDevice.stopWatchingAdvertisements) {
+                bleDevice.stopWatchingAdvertisements().catch(() => {});
+            }
+        }
+
         function onDisconnected() {
-            setStatus('● RECONNECTING...', '#ff3b30', false);
-            // เคลียร์ Object เก่าทิ้ง ป้องกันบัคความจำค้าง
-            bleServer = null; 
-            bleChar = null; 
             gpsChar = null;
-            
-            if (!isReconnecting) {
-                isReconnecting = true;
-                scheduleReconnect();
-            }
+            setStatus('● LINK LOST - RECONNECTING...', '#ff3b30', false);
+            scheduleReconnect();
+            watchForDevice(); // พอ ESP กลับมาในระยะ (เปิดสวิตช์ใหม่) จะได้ต่อทันที
         }
 
-        async function scheduleReconnect() {
-            if (!bleDevice || !isReconnecting) return;
-            try {
-                await connectGatt();
-            } catch (err) {
-                // ถ้าต่อไม่ติด ให้รอ 3 วิแล้วลองใหม่ไปเรื่อยๆ
-                setTimeout(scheduleReconnect, 3000); 
-            }
+        function scheduleReconnect(delayMs) {
+            if (reconnectTimer || !bleDevice) return;
+            reconnectTimer = setTimeout(async () => {
+                reconnectTimer = null;
+                try {
+                    await connectGatt();
+                } catch (err) {
+                    setStatus('● LINK LOST - RECONNECTING...', '#ff3b30', false);
+                    scheduleReconnect(reconnectDelay);
+                    reconnectDelay = Math.min(reconnectDelay * 2, 5000); // ถอยช้าลงทีละนิดเมื่อลองบ่อยๆ ไม่สำเร็จ
+                }
+            }, delayMs != null ? delayMs : reconnectDelay);
         }
 
-        // --- 4. ป้องกัน Data Error เวลา ESP32 ส่งข้อมูลแหว่ง ---
+        // เช็คข้อมูลค้าง: ต่ออยู่แต่ไม่มี packet เกิน 2.5 วิ (เช่น ECU หลุดบน firmware เก่า) ให้รู้ตัว
+        setInterval(() => {
+            if (bleServer && bleServer.connected && Date.now() - lastPacketAt > 2500) {
+                setStatus('● LINK OK - NO ECU DATA', '#ffe066', false);
+            }
+        }, 1000);
+
+        // parse binary packet จาก firmware v1.2.0 (13 ไบต์) / เก่ากว่า (10 ไบต์) — little-endian
         function onDataReceived(event) {
-            const dv = event.target.value; 
-            if (dv.byteLength < 10) return; // ป้องกัน Error Out of Bounds
-
-            const rpm    = dv.getUint16(0, true);
-            const tps    = dv.getInt16(2, true) / 10.0;
-            const afr    = dv.getInt16(4, true) / 10.0;
-            const eot    = dv.getInt16(6, true);
-            const bat    = dv.getInt16(8, true) / 10.0;
+            const dv = event.target.value;
+            const rpm = dv.getUint16(0, true);
+            const tps = dv.getInt16(2, true) / 10.0;
+            const afr = dv.getInt16(4, true) / 10.0;
+            const eot = dv.getInt16(6, true);
+            const bat = dv.getInt16(8, true) / 10.0;
 
             targetRpm = rpm;
-            document.getElementById('tps-val').innerText = tps.toFixed(1);
-            document.getElementById('afr-val').innerText = afr.toFixed(1);
-            document.getElementById('eot-val').innerText = eot;
-            document.getElementById('bat-val').innerText = bat.toFixed(1);
+            lastPacketAt = Date.now();
+            setText(el.tps, tps.toFixed(1));
+            setText(el.afr, afr.toFixed(1));
+            setText(el.eot, String(eot));
+            setText(el.bat, bat.toFixed(1));
+
+            // v1.2: ความเร็วรวมจาก ESP (GPS หรือ EST จาก RPM) + สีบอกแหล่ง
+            if (dv.byteLength >= 13) {
+                const kmh = dv.getUint16(10, true) / 10.0;
+                const mode = dv.getUint8(12); // 0=ไม่มี 1=EST(RPM) 2=GPS
+                setText(el.spd, Math.round(kmh) + ' KM/H');
+                el.spd.className = 'spd ' + (mode === 2 ? 'gps' : (mode === 1 ? 'est' : ''));
+            }
         }
 
         statusBox.addEventListener('click', (e) => {
@@ -229,13 +303,16 @@
             if (!statusBox.classList.contains('connected')) connectBLE();
         });
 
-        // --- 5. จัดการ GPS และ Buffer Overflow ---
+        // ==========================================
+        // GPS Speed feed — ส่งความเร็ว GPS มือถือเข้า ESP
+        // ฝั่ง ESP จะเกลี่ยกับความเร็วที่คำนวณจาก RPM เอง
+        // ==========================================
         const gpsBox = document.getElementById('gps-box');
         let gpsWatchId = null;
         let gpsSending = false;
         let lastGpsWriteAt = 0;
-        let lastPos = null; 
-        let isWritingGps = false; // Mutex ป้องกัน BLE Buffer ค้าง
+        let lastSentKmh = -999;
+        let lastPos = null; // { lat, lon, t } — สำรองคำนวณเองเมื่อ coords.speed เป็น null
 
         function setGpsStatus(text, sending) {
             gpsBox.innerHTML = text + '<span class="sub">' + (sending ? 'TAP TO STOP' : 'TAP TO FEED SPEED') + '</span>';
@@ -243,24 +320,17 @@
         }
 
         async function writeGpsSpeed(kmh) {
-            // เช็คว่ากำลังเขียนอยู่ไหม ถ้าใช่ข้ามเลย (ป้องกันคิวบลูทูธล้นจนแครช)
-            if (!gpsChar || isWritingGps) return; 
-            isWritingGps = true;
+            if (!gpsChar) return;
+            const buf = new ArrayBuffer(2);
+            new DataView(buf).setInt16(0, Math.round(kmh * 10), true); // km/h × 10, little-endian
             try {
-                const buf = new ArrayBuffer(2);
-                new DataView(buf).setInt16(0, Math.round(kmh * 10), true); 
-                if (gpsChar.properties.writeWithoutResponse) {
-                    await gpsChar.writeValueWithoutResponse(buf);
-                } else {
-                    await gpsChar.writeValue(buf);
-                }
-            } catch (e) { 
-                console.warn("Write GPS Drop"); 
-            } finally {
-                isWritingGps = false; // คืนสถานะให้เขียนต่อได้
-            }
+                if (gpsChar.properties.writeWithoutResponse) await gpsChar.writeValueWithoutResponse(buf);
+                else await gpsChar.writeValue(buf);
+                lastSentKmh = kmh;
+            } catch (e) { /* พลาดรอบนี้ ข้ามไปรอบถัดไป ไม่ให้ทั้งแอปสะดุด */ }
         }
 
+        // ระยะทางระหว่างพิกัด 2 จุด (เมตร) — สูตร Haversine
         function haversineMeters(lat1, lon1, lat2, lon2) {
             const R = 6371000;
             const toRad = d => d * Math.PI / 180;
@@ -271,23 +341,17 @@
         }
 
         function onGpsPosition(pos) {
-            const { latitude, longitude, speed, accuracy } = pos.coords;
+            const { latitude, longitude, speed } = pos.coords;
             const nowTs = pos.timestamp || Date.now();
             let kmh = null;
 
-            // กรองความแม่นยำ ถ้า Accuracy แย่กว่า 30 เมตรให้ทิ้งไปเลย (กันความเร็วกระโดด)
-            if (accuracy > 30) {
-                setGpsStatus('● POOR GPS SIGNAL', gpsSending);
-                return;
-            }
-
-            if (typeof speed === 'number' && !Number.isNaN(speed) && speed !== null) {
-                kmh = Math.max(0, speed * 3.6); 
+            if (typeof speed === 'number' && !Number.isNaN(speed)) {
+                kmh = Math.max(0, speed * 3.6); // มือถือคำนวณให้แล้ว ใช้เลย (แม่นกว่า)
             } else if (lastPos) {
-                const dt = (nowTs - lastPos.t) / 1000; 
-                if (dt > 0.2 && dt < 10) { 
+                const dt = (nowTs - lastPos.t) / 1000; // วินาที
+                if (dt > 0.2 && dt < 10) { // กันค่าพัง ถ้าเว้นช่วงนานเกินไปหรือถี่เกินไป
                     const distM = haversineMeters(lastPos.lat, lastPos.lon, latitude, longitude);
-                    kmh = Math.max(0, (distM / dt) * 3.6); 
+                    kmh = Math.max(0, (distM / dt) * 3.6); // สำรอง: คำนวณเองจากระยะทาง/เวลา
                 }
             }
             lastPos = { lat: latitude, lon: longitude, t: nowTs };
@@ -300,7 +364,9 @@
             setGpsStatus('● GPS ' + Math.round(kmh) + ' KM/H', gpsSending);
 
             const now = Date.now();
-            if (gpsSending && bleServer && bleServer.connected && now - lastGpsWriteAt > 500) {
+            // ส่งทุก 400ms หรือส่งด่วนเมื่อความเร็วเปลี่ยนมาก (≥2 km/h) ให้หน้าปัดตามทัน
+            if (gpsSending && bleServer && bleServer.connected &&
+                (now - lastGpsWriteAt > 400 || Math.abs(kmh - lastSentKmh) >= 2)) {
                 lastGpsWriteAt = now;
                 writeGpsSpeed(kmh);
             }
@@ -311,6 +377,7 @@
             gpsWatchId = navigator.geolocation.watchPosition(onGpsPosition, (err) => {
                 setGpsStatus('● GPS ERROR: ' + err.message, false);
                 gpsSending = false;
+                localStorage.setItem(GPS_ON_KEY, '0');
             }, { enableHighAccuracy: true, maximumAge: 1000, timeout: 8000 });
         }
 
@@ -323,9 +390,12 @@
             e.stopPropagation();
             if (!navigator.geolocation) { setGpsStatus('● NO GPS SUPPORT', false); return; }
             gpsSending = !gpsSending;
+            localStorage.setItem(GPS_ON_KEY, gpsSending ? '1' : '0'); // จำสถานะไว้ resume อัตโนมัติหลัง reconnect
             if (gpsSending) { startGpsWatch(); setGpsStatus('● GPS ...', true); }
             else { stopGpsWatch(); setGpsStatus('● GPS OFF', false); }
         });
+
+        window.addEventListener('load', tryAutoConnect);
     </script>
 </body>
 </html>
