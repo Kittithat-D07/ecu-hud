@@ -56,7 +56,7 @@ body{
 #pages{flex:1; min-height:0; position:relative;}
 .page{
   position:absolute; inset:0; display:none; flex-direction:column;
-  padding:4px clamp(8px,2vw,16px) 8px; /* เพิ่ม padding ล่างนิดหน่อยกันชิดขอบไป */
+  padding:4px clamp(8px,2vw,16px) 8px; 
   animation: fadeIn 0.25s ease-out;
 }
 .page.active{display:flex;}
@@ -67,7 +67,7 @@ body{
 }
 
 /* ─────────── DASHBOARD (MOBILE OPTIMIZED FULLSCREEN) ─────────── */
-#page-dash { gap:clamp(8px,1.5vw,12px); }
+#page-dash { gap:clamp(8px,1.5vw,12px); padding-bottom: 8px;}
 
 .dash-screen {
   flex: 1; min-height: 0;
@@ -80,11 +80,12 @@ body{
   padding: 10px; width: 100%;
 }
 
+/* แก้บัคการยืดในแนวตั้ง: ล็อกสัดส่วนตายตัว */
 .dash-gauge-wrapper {
   position: relative;
-  width: 100%; height: 100%;
-  max-width: 900px;
-  aspect-ratio: 1000 / 560; 
+  width: 100%; 
+  height: auto; /* ให้ความสูงแปรผันตามความกว้าง */
+  aspect-ratio: 1000 / 560; /* ล็อกสัดส่วนเกจ 16:9 ให้เหมือนจริง */
   margin: auto;
   container-type: inline-size; 
 }
@@ -95,9 +96,12 @@ canvas#rpmCanvas {
   pointer-events: none; z-index: 1;
 }
 
+/* ล็อกพิกัดตัวเลขให้อยู่ตรงแกนกลางพัดลมเกจเสมอ (ประมาณ 8% จากขอบล่างของกรอบ) */
 .dash-center-info {
-  position: absolute; top: 18cqw; left: 0; width: 100%;
-  z-index: 10; display: flex; flex-direction: column; align-items: center;
+  position: absolute; 
+  bottom: 8%; 
+  left: 0; width: 100%;
+  z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
 }
 .dash-speed-wrap { display:flex; align-items:baseline; gap: 1cqw; justify-content:center; }
 .dash-speed { 
@@ -118,9 +122,11 @@ canvas#rpmCanvas {
   width: 100%;
 }
 
+/* ถ้าเป็นแนวนอน ให้ปรับโครงสร้างสลับฝั่ง */
 @media screen and (orientation: landscape) {
   #page-dash { flex-direction: row; align-items: stretch; }
   .dash-screen { flex: 1.8; } 
+  .dash-gauge-wrapper { width: auto; height: 100%; } /* แนวนอนให้ยึดความสูงเป็นหลัก */
   .dash-bottom-cards { 
     flex: 1; height: 100%;
     grid-template-columns: repeat(2, 1fr); 
@@ -190,7 +196,7 @@ canvas#rpmCanvas {
 .set-title{font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic; letter-spacing:2px; font-size:clamp(0.8rem,1.8vw,1rem); color:#999; margin-bottom:8px;}
 
 #previewCanvas {
-  width: 100%; max-width: 450px; aspect-ratio: 1000 / 560; border-radius: 6px;
+  width: 100%; max-width: 450px; height: auto; aspect-ratio: 1000 / 560; border-radius: 6px;
   background: radial-gradient(circle at center top, rgba(30,30,30,0.4) 0%, var(--panel) 100%);
   border: 2px solid var(--frame); box-shadow: 0 0 20px rgba(0,0,0,0.8);
   margin: 0 auto 15px auto; display: block; object-fit: contain;
@@ -223,8 +229,7 @@ canvas#rpmCanvas {
 
 <div id="topbar">
   <div id="status-box">● TAP TO CONNECT</div>
-  <!-- เพิ่มไกด์การปัดบอกผู้ใช้บางๆ ใน top bar -->
-  <div style="font-size:0.6rem; color:#444; letter-spacing:1px;">&lt; SWIPE TO CHANGE &gt;</div>
+  <div style="font-size:0.6rem; color:#666; letter-spacing:1px;">&lt; SWIPE TO CHANGE &gt;</div>
   <div id="gps-box">● GPS OFF<span class="sub">TAP TO FEED SPEED</span></div>
 </div>
 
@@ -332,7 +337,6 @@ canvas#rpmCanvas {
 
 <script>
 document.body.addEventListener('click', function(e){
-  // ลบ event สำหรับแทบด้านล่างทิ้งหมด ให้เหลือแค่กดเชื่อมต่อ กดยืนยันปุ่มต่างๆ
   if (e.target.closest('#status-box, #gps-box, .theme-swatch, .switch, .mini-btn, .dtc-btn')) return;
   if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(()=>{}); }
 });
@@ -347,7 +351,6 @@ function switchPage(index) {
   pages[index].classList.add('active');
   currentPageIndex = index;
   
-  // อัปเดตพรีวิวถ้าเลื่อนมาหน้า Settings
   if(pages[index].id === 'page-set') {
       drawGauge(currentRpm);
   }
@@ -356,7 +359,7 @@ function switchPage(index) {
 // Swipe Gestures
 let touchStartX = 0;
 let touchEndX = 0;
-const swipeThreshold = 50; // ระยะที่ต้องปัดนิ้วถึงจะเปลี่ยนหน้า
+const swipeThreshold = 50; 
 const pagesContainer = document.getElementById('pages');
 
 pagesContainer.addEventListener('touchstart', e => {
@@ -373,10 +376,8 @@ function handleSwipe() {
   if (Math.abs(diff) < swipeThreshold) return; 
 
   if (diff > 0) {
-    // ปัดซ้าย (เลื่อนไปหน้าถัดไป)
     switchPage(currentPageIndex + 1);
   } else {
-    // ปัดขวา (เลื่อนไปหน้าก่อนหน้า)
     switchPage(currentPageIndex - 1);
   }
 }
@@ -399,7 +400,7 @@ const el = {
 };
 function setText(node, txt){ if (node.__t !== txt) { node.__t = txt; node.textContent = txt; } }
 
-// ─────────── 6 STYLES GAUGE SYSTEM (FIXED FOR 1000x560) ───────────
+// ─────────── 6 STYLES GAUGE SYSTEM ───────────
 const canvas = document.getElementById('rpmCanvas'); 
 const ctx = canvas.getContext('2d');
 const prevCanvas = document.getElementById('previewCanvas');
@@ -418,7 +419,7 @@ const startAng = Math.PI * 1.15;
 const endAng = Math.PI * 1.85;
 const totalAng = endAng - startAng;
 
-/* 1. SUPERBIKE (Wide Arc Sweep) */
+/* 1. SUPERBIKE */
 function drawSuperbikeArc(rpm) {
   ctx.beginPath(); ctx.arc(arcCx, arcCy, arcR, startAng, endAng);
   ctx.lineWidth = 40; ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.stroke();
@@ -448,7 +449,7 @@ function drawSuperbikeArc(rpm) {
   }
 }
 
-/* 2. CYBER BAR (Linear Skewed Bar) */
+/* 2. CYBER BAR */
 function drawCyberBar(rpm) {
   let pad = 100; let sx = pad; let w = cvsW - (pad*2); let sy = 400; let h = 60; let skew = 50;
   ctx.fillStyle = 'rgba(255,255,255,0.05)';
@@ -471,7 +472,7 @@ function drawCyberBar(rpm) {
   }
 }
 
-/* 3. HUD ARC (Simple Thin Arc) */
+/* 3. HUD ARC */
 function drawHudArc(rpm) {
   let r = 400; let sa = Math.PI * 1.2; let ea = Math.PI * 1.8; let ta = ea - sa;
 
@@ -494,7 +495,7 @@ function drawHudArc(rpm) {
   }
 }
 
-/* 4. F1 HYBRID (Top LED Shift Lights + Clean Curve) */
+/* 4. F1 HYBRID */
 function drawF1Hybrid(rpm) {
   let rpmCap = Math.min(Math.max(rpm,0),maxRpm);
   let r = 380; let sa = Math.PI * 1.2; let ea = Math.PI * 1.8; let ta = ea - sa;
@@ -525,7 +526,7 @@ function drawF1Hybrid(rpm) {
   }
 }
 
-/* 5. NEON PULSE (Continuous Thick Glow) */
+/* 5. NEON PULSE */
 function drawNeonPulse(rpm) {
   let r = 400; let sa = Math.PI * 1.2; let ea = Math.PI * 1.8; let ta = ea - sa;
   let rpmCap = Math.min(Math.max(rpm,0),maxRpm); let fillAng = sa + (rpmCap/maxRpm)*ta;
@@ -553,7 +554,7 @@ function drawNeonPulse(rpm) {
   }
 }
 
-/* 6. MECHA CORE (Aggressive Polygonal Blocks) */
+/* 6. MECHA CORE */
 function drawMechaCore(rpm) {
   let rpmCap = Math.min(Math.max(rpm,0),maxRpm);
   let r = 400;
