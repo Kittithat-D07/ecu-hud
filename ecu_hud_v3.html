@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>ECU Racing Dash (BLE)</title>
+<title>ECU Mobile Dash (BLE)</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&family=Rajdhani:ital,wght@0,500;0,700;1,700&display=swap');
 
@@ -49,86 +49,102 @@ body{
 /* ─────────── Page container ─────────── */
 #pages{flex:1; min-height:0; position:relative;}
 .page{
-  position:absolute; inset:0; display:none;
+  position:absolute; inset:0; display:none; flex-direction:column;
   padding:4px clamp(8px,2vw,16px) 4px;
 }
 .page.active{display:flex;}
 
-/* ─────────── DASHBOARD (WIDE RACING DASH) ─────────── */
-#page-dash { flex-direction:column; gap:clamp(6px,1.2vw,12px); }
+/* ─────────── DASHBOARD (MOBILE OPTIMIZED) ─────────── */
+#page-dash { gap:clamp(8px,1.5vw,12px); }
 
-/* จอหลักด้านบน (RPM + Speed) */
+/* จอหลักด้านบน */
 .dash-screen {
-  flex: 1; 
+  flex: 1; min-height: 0;
   background:radial-gradient(circle at center top, rgba(30,30,30,0.4) 0%, var(--panel) 100%);
-  border:2px solid var(--frame); 
-  border-radius:6px;
+  border:2px solid var(--frame); border-radius:6px;
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%);
-  position:relative; 
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  display:flex; align-items:center; justify-content:center;
   box-shadow:inset 0 0 40px rgba(0,0,0,0.9); overflow:hidden;
   transition: box-shadow 0.2s, border-color 0.2s;
+  padding: 10px;
 }
-/* Canvas วาดเกจแนวนอน/อาร์ค */
+
+/* กรอบล็อกสัดส่วนเกจ ป้องกันการเบี้ยวหรือโดนตัดขอบ */
+.dash-gauge-wrapper {
+  position: relative;
+  width: 100%; max-height: 100%;
+  aspect-ratio: 1000 / 560; /* ล็อกอัตราส่วนให้พอดีกับ Canvas เสมอ */
+  margin: auto;
+  container-type: inline-size; /* ให้ตัวเลขปรับขนาดตามความกว้างของเกจอัตโนมัติ */
+}
+
+/* Canvas วาดเกจ */
 canvas#rpmCanvas {
-  position:absolute; top:0; left:0; 
-  width:100%; height:100%; 
-  object-fit: contain; object-position: top center;
-  z-index: 1; pointer-events:none;
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none; z-index: 1;
 }
-/* ตัวเลขความเร็วและรอบตรงกลาง */
+
+/* ตัวเลขความเร็วและรอบ */
 .dash-center-info {
-  position:relative; z-index:10; 
-  text-align:center; display:flex; flex-direction:column; align-items:center;
-  margin-top: clamp(20px, 10vh, 80px);
+  position: absolute; top: 18cqw; left: 0; width: 100%;
+  z-index: 10; display: flex; flex-direction: column; align-items: center;
 }
-.dash-speed-wrap { display:flex; align-items:baseline; gap:8px; justify-content:center; }
+.dash-speed-wrap { display:flex; align-items:baseline; gap: 1cqw; justify-content:center; }
 .dash-speed { 
   font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic; 
-  font-size:clamp(4.5rem, 15vw, 10rem); 
-  color:#fff; line-height:0.8; text-shadow:0 0 20px rgba(255,255,255,0.2); 
-  letter-spacing:-4px;
+  font-size: 16cqw; color:#fff; line-height:0.8; text-shadow:0 0 20px rgba(255,255,255,0.2); letter-spacing:-4px;
 }
-.dash-speed-unit { font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic; font-size:clamp(1rem,3vw,2rem); color:#aaa; letter-spacing:2px; }
-.dash-rpm-val { font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic; font-size:clamp(1.5rem, 4vw, 3rem); color:var(--accent2); letter-spacing:1px; margin-top:5px; }
-.dash-rpm-unit { font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(0.8rem, 2vw, 1.2rem); color:#777; letter-spacing:4px; }
-.spd-mode { font-family:'Rajdhani',sans-serif; font-size:clamp(0.7rem,1.5vw,1rem); font-weight:700; color:#555; letter-spacing:2px; margin-top:5px; }
+.dash-speed-unit { font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic; font-size: 3.5cqw; color:#aaa; letter-spacing:2px; }
+.dash-rpm-val { font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic; font-size: 5cqw; color:var(--accent2); letter-spacing:1px; margin-top: 2cqw; }
+.dash-rpm-unit { font-family:'Rajdhani',sans-serif; font-weight:700; font-size: 2.5cqw; color:#777; letter-spacing:4px; margin-left: 1cqw; }
+.spd-mode { font-family:'Rajdhani',sans-serif; font-size: 2.5cqw; font-weight:700; color:#555; letter-spacing:2px; margin-top: 1cqw; }
 .spd-mode.gps{color:#00e676; text-shadow:0 0 10px rgba(0,230,118,0.5);}
 .spd-mode.est{color:#ffe066; text-shadow:0 0 10px rgba(255,224,102,0.4);}
 
-/* การ์ดสถานะเรียงแนวนอนด้านล่าง */
+/* การ์ดสถานะ 4 กล่อง */
 .dash-bottom-cards {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(6px,1.2vw,12px); flex-shrink:0;
+  display: grid; gap: clamp(6px,1.5vw,12px); flex-shrink:0;
+  grid-template-columns: repeat(2, 1fr); 
+  grid-template-rows: repeat(2, 1fr);
 }
+
+/* ─────────── RESPONSIVE: แนวนอน (Landscape Racing Layout) ─────────── */
+@media screen and (orientation: landscape) {
+  #page-dash { flex-direction: row; align-items: stretch; }
+  .dash-screen { flex: 1.6; } /* เกจใหญ่อยู่ซ้าย */
+  .dash-bottom-cards { 
+    flex: 1; height: 100%;
+    /* จัดการ์ดไว้ทางขวาแบบ 2x2 เต็มกรอบ */
+    grid-template-columns: repeat(2, 1fr); 
+    grid-template-rows: repeat(2, 1fr); 
+  }
+  .data-grid { grid-template-columns: repeat(4, 1fr) !important; grid-template-rows: repeat(3, 1fr) !important; }
+}
+
 .card {
   background:var(--panel); border-radius:4px; 
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
   display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
   box-shadow:inset 0 0 15px rgba(0,0,0,0.9); backdrop-filter:blur(4px);
-  padding: clamp(6px,1.5vw,12px) 4px; position: relative;
+  padding: clamp(6px,1.5vw,14px) 4px; position: relative;
 }
 .card::before {
   content: ''; position: absolute; top: 0; left: 0; right: 0; height: 100%;
-  background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.015) 10px, rgba(255,255,255,0.015) 20px);
-  pointer-events: none;
+  background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.015) 10px, rgba(255,255,255,0.015) 20px); pointer-events: none;
 }
 .card-tps{border-top:3px solid var(--tps); background:linear-gradient(180deg, rgba(255,152,0,0.15) 0%, var(--panel) 80%);} 
 .card-afr{border-top:3px solid var(--afr); background:linear-gradient(180deg, rgba(0,229,255,0.15) 0%, var(--panel) 80%);} 
 .card-eot{border-top:3px solid var(--eot); background:linear-gradient(180deg, rgba(255,59,48,0.15) 0%, var(--panel) 80%);} 
 .card-bat{border-top:3px solid var(--bat); background:linear-gradient(180deg, rgba(0,230,118,0.15) 0%, var(--panel) 80%);} 
 
-.header-title{font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic; font-size:clamp(0.8rem,2vw,1.1rem); letter-spacing:2px; line-height:1;}
-.header-sub{color:#777; font-size:clamp(0.55rem,1.2vw,0.7rem); margin-bottom:4px;}
+.header-title{font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic; font-size:clamp(0.85rem,2vw,1.1rem); letter-spacing:2px; line-height:1;}
+.header-sub{color:#777; font-size:clamp(0.55rem,1.2vw,0.75rem); margin-bottom:4px;}
 .tps-txt{color:var(--tps);} .afr-txt{color:var(--afr);} .eot-txt{color:var(--eot);} .bat-txt{color:var(--bat);}
 
 .card-value-wrap { display:flex; align-items:baseline; z-index:1; justify-content:center;}
-.card-value{font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic; font-size:clamp(1.5rem,4vw,2.5rem); line-height:0.9; text-shadow:2px 2px 5px rgba(0,0,0,0.8);}
-.card-unit{color:#888; font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic; font-size:clamp(0.7rem,1.5vw,1rem); margin-left:4px;}
-
-@media screen and (orientation:portrait){
-  .dash-bottom-cards { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); }
-  canvas#rpmCanvas { object-fit: cover; } 
-}
+.card-value{font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic; font-size:clamp(1.8rem,6vmin,3.5rem); line-height:0.9; text-shadow:2px 2px 5px rgba(0,0,0,0.8);}
+.card-unit{color:#888; font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic; font-size:clamp(0.75rem,1.5vw,1rem); margin-left:4px;}
 
 /* ─────────── ALL DATA page ─────────── */
 #page-data{align-items:stretch;}
@@ -144,8 +160,8 @@ canvas#rpmCanvas {
 .data-tile.link .val{font-size:clamp(1rem,2.6vw,1.5rem);}
 
 /* ─────────── DTC page ─────────── */
-#page-dtc{align-items:stretch; gap:clamp(8px,1.6vw,16px);}
-.dtc-btns{display:flex; gap:clamp(8px,1.6vw,16px); flex-shrink:0;}
+#page-dtc{gap:clamp(8px,1.6vw,16px);}
+.dtc-btns{display:flex; flex-direction:row; gap:clamp(8px,1.6vw,16px); flex-shrink:0;}
 .dtc-btn{
   flex:1; padding:clamp(12px,2.6vw,20px) 8px; border-radius:4px; border:2px solid var(--accent);
   background:rgba(255,255,255,0.05); color:var(--accent); font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic;
@@ -163,26 +179,23 @@ canvas#rpmCanvas {
 .dtc-hex:empty::before{content:'—'; color:#555;}
 
 /* ─────────── SETTINGS page & Preview ─────────── */
-#page-set{align-items:stretch; overflow-y:auto; flex-direction:column;}
+#page-set{overflow-y:auto;}
 .set-section{margin-bottom:clamp(14px,2.6vw,22px);}
 .set-title{font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic; letter-spacing:2px; font-size:clamp(0.8rem,1.8vw,1rem); color:#999; margin-bottom:8px;}
 
-/* Preview Screen in settings */
+/* Preview Screen in settings ล็อกสัดส่วนให้เหมือนจอหลัก */
 #previewCanvas {
-  width: 100%;
-  max-width: 450px;
-  height: 140px;
+  width: 100%; max-width: 450px;
+  aspect-ratio: 1000 / 560;
   border-radius: 6px;
   background: radial-gradient(circle at center top, rgba(30,30,30,0.4) 0%, var(--panel) 100%);
   border: 2px solid var(--frame);
   box-shadow: 0 0 20px rgba(0,0,0,0.8);
   margin: 0 auto 15px auto;
   display: block;
-  object-fit: cover;
-  object-position: top center;
 }
 
-.theme-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(80px,1fr)); gap:clamp(6px,1.2vw,10px);}
+.theme-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(85px,1fr)); gap:clamp(6px,1.2vw,10px);}
 .theme-swatch{
   border-radius:4px; padding:clamp(8px,1.5vw,12px) 4px; text-align:center; cursor:pointer;
   font-family:'Rajdhani',sans-serif; font-weight:700; font-size:clamp(0.6rem,1.2vw,0.8rem); letter-spacing:1px;
@@ -243,22 +256,24 @@ canvas#rpmCanvas {
 
 <div id="pages">
 
-  <!-- DASHBOARD (PRO RACING WIDE DASH) -->
+  <!-- DASHBOARD -->
   <div class="page active" id="page-dash">
-    <!-- จอเกจด้านบน -->
+    <!-- จอเกจด้านบน/ซ้าย -->
     <div class="dash-screen" id="rpm-panel">
-      <canvas id="rpmCanvas" width="1200" height="400"></canvas>
-      <div class="dash-center-info">
-        <div class="dash-speed-wrap">
-          <div id="spd-digital" class="dash-speed">0</div>
-          <div class="dash-speed-unit">KM/H</div>
+      <div class="dash-gauge-wrapper">
+        <canvas id="rpmCanvas" width="1000" height="560"></canvas>
+        <div class="dash-center-info">
+          <div class="dash-speed-wrap">
+            <div id="spd-digital" class="dash-speed">0</div>
+            <div class="dash-speed-unit">KM/H</div>
+          </div>
+          <div class="dash-rpm-val"><span id="rpm-digital">0</span> <span class="dash-rpm-unit">RPM</span></div>
+          <div id="spd-mode-lbl" class="spd-mode">--</div>
         </div>
-        <div class="dash-rpm-val"><span id="rpm-digital">0</span> <span class="dash-rpm-unit">RPM</span></div>
-        <div id="spd-mode-lbl" class="spd-mode">--</div>
       </div>
     </div>
     
-    <!-- จอสถานะด้านล่าง -->
+    <!-- จอสถานะด้านล่าง/ขวา -->
     <div class="dash-bottom-cards">
       <div class="card card-tps">
         <div class="header-title tps-txt">TPS</div><div class="header-sub">THROTTLE</div>
@@ -312,7 +327,7 @@ canvas#rpmCanvas {
   <div class="page" id="page-set">
     <div class="set-section" style="text-align:center;">
       <div class="set-title" style="margin-bottom:12px;">LIVE PREVIEW (จอตัวอย่าง)</div>
-      <canvas id="previewCanvas" width="1200" height="400"></canvas>
+      <canvas id="previewCanvas" width="1000" height="560"></canvas>
     </div>
 
     <div class="set-section">
@@ -426,7 +441,7 @@ const el = {
 };
 function setText(node, txt){ if (node.__t !== txt) { node.__t = txt; node.textContent = txt; } }
 
-// ─────────── 6 STYLES GAUGE SYSTEM ───────────
+// ─────────── 6 STYLES GAUGE SYSTEM (FIXED FOR 1000x560) ───────────
 const canvas = document.getElementById('rpmCanvas'); 
 const ctx = canvas.getContext('2d');
 const prevCanvas = document.getElementById('previewCanvas');
@@ -437,30 +452,35 @@ const rpmPanel = document.getElementById('rpm-panel');
 let targetRpm=0, currentRpm=0;
 let currentThemeAccent = '#00e5ff';
 
+const cvsW = 1000, cvsH = 560;
+const arcCx = cvsW / 2;
+const arcCy = 520; 
+const arcR = 440; 
+const startAng = Math.PI * 1.15;
+const endAng = Math.PI * 1.85;
+const totalAng = endAng - startAng;
+
 /* 1. SUPERBIKE (Wide Arc Sweep) */
 function drawSuperbikeArc(rpm) {
-  let cx = canvas.width / 2; let cy = canvas.height * 1.5; let r = canvas.height * 1.3; 
-  let startA = Math.PI * 1.25; let endA = Math.PI * 1.75; let totalA = endA - startA;
-
-  ctx.beginPath(); ctx.arc(cx, cy, r, startA, endA);
+  ctx.beginPath(); ctx.arc(arcCx, arcCy, arcR, startAng, endAng);
   ctx.lineWidth = 40; ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.stroke();
 
   for(let i=0; i<=120; i++){
     if(i%10===0) {
-       let a = startA + (i/120)*totalA;
+       let a = startAng + (i/120)*totalAng;
        let color = i>=100 ? '#ff3b30' : '#fff';
-       ctx.beginPath(); ctx.moveTo(cx + Math.cos(a)*(r-30), cy + Math.sin(a)*(r-30)); ctx.lineTo(cx + Math.cos(a)*(r+30), cy + Math.sin(a)*(r+30));
+       ctx.beginPath(); ctx.moveTo(arcCx + Math.cos(a)*(arcR-30), arcCy + Math.sin(a)*(arcR-30)); ctx.lineTo(arcCx + Math.cos(a)*(arcR+30), arcCy + Math.sin(a)*(arcR+30));
        ctx.strokeStyle = color; ctx.lineWidth = 4; ctx.stroke();
-       let txtR = r - 60;
+       let txtR = arcR - 60;
        ctx.fillStyle = color; ctx.font = "italic bold 36px Rajdhani"; ctx.textAlign="center"; ctx.textBaseline="middle";
-       ctx.fillText(i/10, cx + Math.cos(a)*txtR, cy + Math.sin(a)*txtR);
+       ctx.fillText(i/10, arcCx + Math.cos(a)*txtR, arcCy + Math.sin(a)*txtR);
     }
   }
 
   let rpmCap = Math.min(Math.max(rpm,0),maxRpm); let activeBlocks = Math.floor((rpmCap/maxRpm)*60);
   for(let b=0; b<60; b++){
-    let bS = startA + (b/60)*totalA; let bE = startA + ((b+0.8)/60)*totalA;
-    ctx.beginPath(); ctx.arc(cx, cy, r, bS, bE); ctx.lineWidth = 40;
+    let bS = startAng + (b/60)*totalAng; let bE = startAng + ((b+0.8)/60)*totalAng;
+    ctx.beginPath(); ctx.arc(arcCx, arcCy, arcR, bS, bE); ctx.lineWidth = 40;
     if(b < activeBlocks){
       let isRed = (b/60) >= (redline/maxRpm); let isYellow = (b/60) >= ((redline-2000)/maxRpm);
       ctx.strokeStyle = isRed ? '#ff3b30' : (isYellow ? '#ffe066' : currentThemeAccent);
@@ -472,7 +492,7 @@ function drawSuperbikeArc(rpm) {
 
 /* 2. CYBER BAR (Linear Skewed Bar) */
 function drawCyberBar(rpm) {
-  let pad = 150; let sx = pad; let w = canvas.width - (pad*2); let sy = 120; let h = 45; let skew = 40;
+  let pad = 100; let sx = pad; let w = cvsW - (pad*2); let sy = 400; let h = 60; let skew = 50;
   ctx.fillStyle = 'rgba(255,255,255,0.05)';
   ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx+w, sy); ctx.lineTo(sx+w+skew, sy-h); ctx.lineTo(sx+skew, sy-h); ctx.fill();
 
@@ -495,131 +515,121 @@ function drawCyberBar(rpm) {
 
 /* 3. HUD ARC (Simple Thin Arc) */
 function drawHudArc(rpm) {
-  let cx = canvas.width / 2; let cy = canvas.height * 1.5; let r = canvas.height * 1.25; 
-  let startA = Math.PI * 1.3; let endA = Math.PI * 1.7; let totalA = endA - startA;
+  let r = 400; let sa = Math.PI * 1.2; let ea = Math.PI * 1.8; let ta = ea - sa;
 
-  ctx.beginPath(); ctx.arc(cx, cy, r, startA, endA);
+  ctx.beginPath(); ctx.arc(arcCx, arcCy, r, sa, ea);
   ctx.lineWidth = 15; ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.stroke();
   
-  let fillAng = startA + (Math.min(Math.max(rpm,0),maxRpm)/maxRpm)*totalA;
+  let fillAng = sa + (Math.min(Math.max(rpm,0),maxRpm)/maxRpm)*ta;
   if(rpm > 0) {
-    ctx.beginPath(); ctx.arc(cx, cy, r, startA, fillAng);
+    ctx.beginPath(); ctx.arc(arcCx, arcCy, r, sa, fillAng);
     ctx.lineWidth = 15; ctx.strokeStyle = rpm >= redline ? '#ff3b30' : currentThemeAccent;
     ctx.shadowBlur = 20; ctx.shadowColor = ctx.strokeStyle;
     ctx.stroke(); ctx.shadowBlur = 0;
   }
   for(let i=0; i<=120; i+=10){
-    let a = startA + (i/120)*totalA; let color = i>=100 ? '#ff3b30' : '#fff';
-    ctx.beginPath(); ctx.moveTo(cx + Math.cos(a)*(r-15), cy + Math.sin(a)*(r-15)); ctx.lineTo(cx + Math.cos(a)*(r+15), cy + Math.sin(a)*(r+15));
+    let a = sa + (i/120)*ta; let color = i>=100 ? '#ff3b30' : '#fff';
+    ctx.beginPath(); ctx.moveTo(arcCx + Math.cos(a)*(r-15), arcCy + Math.sin(a)*(r-15)); ctx.lineTo(arcCx + Math.cos(a)*(r+15), arcCy + Math.sin(a)*(r+15));
     ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.stroke();
     ctx.fillStyle = color; ctx.font = "italic bold 32px Rajdhani"; ctx.textAlign="center"; ctx.textBaseline="middle";
-    ctx.fillText(i/10, cx + Math.cos(a)*(r+40), cy + Math.sin(a)*(r+40));
+    ctx.fillText(i/10, arcCx + Math.cos(a)*(r+40), arcCy + Math.sin(a)*(r+40));
   }
 }
 
 /* 4. F1 HYBRID (Top LED Shift Lights + Clean Curve) */
 function drawF1Hybrid(rpm) {
   let rpmCap = Math.min(Math.max(rpm,0),maxRpm);
-  let cx = canvas.width / 2; let cy = canvas.height * 1.5; let r = canvas.height * 1.25;
-  let startA = Math.PI * 1.3; let endA = Math.PI * 1.7; let totalA = endA - startA;
+  let r = 380; let sa = Math.PI * 1.2; let ea = Math.PI * 1.8; let ta = ea - sa;
 
-  // Arc Curve
-  ctx.beginPath(); ctx.arc(cx, cy, r, startA, endA);
+  ctx.beginPath(); ctx.arc(arcCx, arcCy, r, sa, ea);
   ctx.lineWidth = 8; ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.stroke();
-  let fillAng = startA + (rpmCap/maxRpm)*totalA;
+  let fillAng = sa + (rpmCap/maxRpm)*ta;
   if(rpm > 0) {
-      ctx.beginPath(); ctx.arc(cx, cy, r, startA, fillAng);
+      ctx.beginPath(); ctx.arc(arcCx, arcCy, r, sa, fillAng);
       ctx.lineWidth = 12; ctx.strokeStyle = rpm >= redline ? '#ff3b30' : currentThemeAccent; ctx.stroke();
   }
 
-  // F1 Shift Light Bar (Top)
-  let barW = canvas.width * 0.6; let barX = (canvas.width - barW) / 2; let barY = 40;
+  let barW = 600; let barX = 200; let barY = 60;
   for(let i=0; i<15; i++) {
       ctx.beginPath(); ctx.rect(barX + i*(barW/15) + 4, barY, (barW/15)-8, 16);
       if ((rpmCap/maxRpm) > (i/15)) {
           let isRed = (i/15) >= (redline/maxRpm); let isYellow = (i/15) >= ((redline-2000)/maxRpm);
           ctx.fillStyle = isRed ? '#ff3b30' : (isYellow ? '#ffe066' : currentThemeAccent);
           ctx.shadowBlur = 15; ctx.shadowColor = ctx.fillStyle;
-      } else {
-          ctx.fillStyle = 'rgba(255,255,255,0.1)'; ctx.shadowBlur = 0;
-      }
+      } else { ctx.fillStyle = 'rgba(255,255,255,0.1)'; ctx.shadowBlur = 0; }
       ctx.fill();
   }
   ctx.shadowBlur = 0;
   for(let i=0; i<=120; i+=20){
-      let a = startA + (i/120)*totalA; let color = i>=100 ? '#ff3b30' : '#fff';
+      let a = sa + (i/120)*ta; let color = i>=100 ? '#ff3b30' : '#fff';
       ctx.fillStyle = color; ctx.font = "italic bold 28px Rajdhani"; ctx.textAlign="center"; ctx.textBaseline="middle";
-      ctx.fillText(i/10, cx + Math.cos(a)*(r-40), cy + Math.sin(a)*(r-40));
+      ctx.fillText(i/10, arcCx + Math.cos(a)*(r-40), arcCy + Math.sin(a)*(r-40));
   }
 }
 
 /* 5. NEON PULSE (Continuous Thick Glow) */
 function drawNeonPulse(rpm) {
-  let cx = canvas.width / 2; let cy = canvas.height * 1.5; let r = canvas.height * 1.25; 
-  let startA = Math.PI * 1.3; let endA = Math.PI * 1.7; let totalA = endA - startA;
-  let rpmCap = Math.min(Math.max(rpm,0),maxRpm); let fillAng = startA + (rpmCap/maxRpm)*totalA;
+  let r = 400; let sa = Math.PI * 1.2; let ea = Math.PI * 1.8; let ta = ea - sa;
+  let rpmCap = Math.min(Math.max(rpm,0),maxRpm); let fillAng = sa + (rpmCap/maxRpm)*ta;
 
-  ctx.beginPath(); ctx.arc(cx, cy, r, startA, endA);
+  ctx.beginPath(); ctx.arc(arcCx, arcCy, r, sa, ea);
   ctx.lineWidth = 30; ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.stroke();
 
   if (rpm > 0) {
-      let grad = ctx.createLinearGradient(cx + Math.cos(startA)*r, cy + Math.sin(startA)*r, cx + Math.cos(endA)*r, cy + Math.sin(endA)*r);
+      let grad = ctx.createLinearGradient(arcCx + Math.cos(sa)*r, arcCy + Math.sin(sa)*r, arcCx + Math.cos(ea)*r, arcCy + Math.sin(ea)*r);
       grad.addColorStop(0, currentThemeAccent); grad.addColorStop(1, rpm >= redline ? '#ff3b30' : currentThemeAccent);
 
-      ctx.beginPath(); ctx.arc(cx, cy, r, startA, fillAng);
+      ctx.beginPath(); ctx.arc(arcCx, arcCy, r, sa, fillAng);
       ctx.lineCap = "round"; ctx.lineWidth = 26; ctx.strokeStyle = rpm >= redline ? '#ff3b30' : currentThemeAccent;
       ctx.shadowBlur = 40; ctx.shadowColor = ctx.strokeStyle; ctx.stroke();
 
-      ctx.beginPath(); ctx.arc(cx + Math.cos(fillAng)*r, cy + Math.sin(fillAng)*r, 12, 0, Math.PI*2);
+      ctx.beginPath(); ctx.arc(arcCx + Math.cos(fillAng)*r, arcCy + Math.sin(fillAng)*r, 12, 0, Math.PI*2);
       ctx.fillStyle = '#fff'; ctx.shadowBlur = 20; ctx.fill();
   }
   ctx.lineCap = "butt"; ctx.shadowBlur = 0;
   
   for(let i=0; i<=120; i+=10){
-      let a = startA + (i/120)*totalA; let color = i>=100 ? '#ff3b30' : '#fff';
+      let a = sa + (i/120)*ta; let color = i>=100 ? '#ff3b30' : '#fff';
       ctx.fillStyle = color; ctx.font = "bold 26px Rajdhani"; ctx.textAlign="center"; ctx.textBaseline="middle";
-      ctx.fillText(i/10, cx + Math.cos(a)*(r+45), cy + Math.sin(a)*(r+45));
+      ctx.fillText(i/10, arcCx + Math.cos(a)*(r+45), arcCy + Math.sin(a)*(r+45));
   }
 }
 
 /* 6. MECHA CORE (Aggressive Polygonal Blocks) */
 function drawMechaCore(rpm) {
-  let cx = canvas.width / 2; let cy = canvas.height * 1.5; let r = canvas.height * 1.25; 
-  let startA = Math.PI * 1.25; let endA = Math.PI * 1.75; let totalA = endA - startA;
   let rpmCap = Math.min(Math.max(rpm,0),maxRpm);
+  let r = 400;
 
   for (let i = 0; i < 35; i++) {
-      let a = startA + (i/35)*totalA;
-      let nextA = startA + ((i+0.7)/35)*totalA;
+      let a = startAng + (i/35)*totalAng;
+      let nextA = startAng + ((i+0.7)/35)*totalAng;
       
       ctx.beginPath();
-      ctx.moveTo(cx + Math.cos(a)*(r-25), cy + Math.sin(a)*(r-25));
-      ctx.lineTo(cx + Math.cos(a)*(r+25), cy + Math.sin(a)*(r+25));
-      ctx.lineTo(cx + Math.cos(nextA)*(r+35), cy + Math.sin(nextA)*(r+35));
-      ctx.lineTo(cx + Math.cos(nextA)*(r-15), cy + Math.sin(nextA)*(r-15));
+      ctx.moveTo(arcCx + Math.cos(a)*(r-25), arcCy + Math.sin(a)*(r-25));
+      ctx.lineTo(arcCx + Math.cos(a)*(r+25), arcCy + Math.sin(a)*(r+25));
+      ctx.lineTo(arcCx + Math.cos(nextA)*(r+35), arcCy + Math.sin(nextA)*(r+35));
+      ctx.lineTo(arcCx + Math.cos(nextA)*(r-15), arcCy + Math.sin(nextA)*(r-15));
       ctx.closePath();
 
       if ((rpmCap/maxRpm) > (i/35)) {
           let isRed = (i/35) >= (redline/maxRpm);
           ctx.fillStyle = isRed ? '#ff3b30' : currentThemeAccent;
           ctx.shadowBlur = 10; ctx.shadowColor = ctx.fillStyle;
-      } else {
-          ctx.fillStyle = 'rgba(255,255,255,0.05)'; ctx.shadowBlur = 0;
-      }
+      } else { ctx.fillStyle = 'rgba(255,255,255,0.05)'; ctx.shadowBlur = 0; }
       ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,0.8)'; ctx.lineWidth = 2; ctx.stroke();
   }
   ctx.shadowBlur = 0;
   for(let i=0; i<=120; i+=20){
-      let a = startA + (i/120)*totalA; let color = i>=100 ? '#ff3b30' : '#888';
+      let a = startAng + (i/120)*totalAng; let color = i>=100 ? '#ff3b30' : '#888';
       ctx.fillStyle = color; ctx.font = "italic 900 32px Rajdhani"; ctx.textAlign="center"; ctx.textBaseline="middle";
-      ctx.fillText(i/10, cx + Math.cos(a)*(r-60), cy + Math.sin(a)*(r-60));
+      ctx.fillText(i/10, arcCx + Math.cos(a)*(r-60), arcCy + Math.sin(a)*(r-60));
   }
 }
 
 // ─────────── MASTER RENDERER ───────────
 let currentGaugeType = 'superbike'; 
 function drawGauge(rpm) {
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.clearRect(0,0,cvsW,cvsH);
   ctx.shadowBlur = 0;
   
   if (currentGaugeType === 'superbike') drawSuperbikeArc(rpm);
@@ -630,7 +640,7 @@ function drawGauge(rpm) {
   else if (currentGaugeType === 'mecha') drawMechaCore(rpm);
 
   if(rpm>=redline){ 
-    rpmPanel.style.boxShadow="inset 0 0 120px rgba(255,0,0,0.6)"; rpmPanel.style.borderColor="rgba(255,0,0,0.8)"; 
+    rpmPanel.style.boxShadow="inset 0 0 80px rgba(255,0,0,0.5)"; rpmPanel.style.borderColor="rgba(255,0,0,0.8)"; 
   } else { 
     rpmPanel.style.boxShadow="inset 0 0 40px rgba(0,0,0,0.9)"; rpmPanel.style.borderColor="var(--frame)"; 
   }
