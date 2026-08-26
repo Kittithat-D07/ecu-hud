@@ -23,7 +23,6 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;user-select:none;-webkit-tap-highlight-color:transparent;}
 
-/* ซ่อนแถบ Scrollbar แต่ยังไถเลื่อนได้ปกติ */
 ::-webkit-scrollbar { display: none; width: 0; height: 0; }
 * { scrollbar-width: none; -ms-overflow-style: none; }
 
@@ -40,7 +39,6 @@ body{
   padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
-/* ─────────── Top status bar ─────────── */
 #topbar{
   display:flex; justify-content:space-between; align-items:center;
   padding:6px clamp(8px,2vw,16px); flex-shrink:0; z-index:20;
@@ -52,13 +50,12 @@ body{
 #gps-box.sending{color:var(--accent2);}
 #gps-box .sub{display:block; font-size:0.6rem; color:#777; letter-spacing:1px; font-weight:500; margin-top:1px; font-style:normal;}
 
-/* ─────────── Page container ─────────── */
 #pages{flex:1; min-height:0; position:relative;}
 .page{
   position:absolute; inset:0; display:none; flex-direction:column;
   padding:4px clamp(8px,2vw,16px) 8px; 
   animation: fadeIn 0.2s ease-out;
-  padding-bottom: 25px; /* เผื่อที่ให้จุดไข่ปลาด้านล่าง */
+  padding-bottom: 25px;
 }
 .page.active{display:flex;}
 
@@ -67,7 +64,6 @@ body{
   to { opacity: 1; transform: translateX(0); }
 }
 
-/* ─────────── DASHBOARD (MOBILE OPTIMIZED FULLSCREEN) ─────────── */
 #page-dash { gap:clamp(8px,1.5vw,12px); }
 
 .dash-screen {
@@ -111,7 +107,6 @@ canvas#rpmCanvas {
 .spd-mode.gps{color:#00e676; text-shadow:0 0 10px rgba(0,230,118,0.5);}
 .spd-mode.est{color:#ffe066; text-shadow:0 0 10px rgba(255,224,102,0.4);}
 
-/* ─────────── CSS Layout ตามแนวตั้ง/แนวนอน ─────────── */
 @media screen and (orientation: portrait) {
   .dash-gauge-wrapper { aspect-ratio: 1 / 1; max-width: 500px; height: auto;} 
   .dash-center-info { top: 50%; transform: translateY(-50%); } 
@@ -142,7 +137,6 @@ canvas#rpmCanvas {
   #previewCanvas { aspect-ratio: 1000 / 560; max-width: 450px; } 
 }
 
-/* การ์ดสถานะ */
 .dash-bottom-cards {
   display: grid; gap: clamp(6px,1.5vw,12px); flex-shrink:0;
   grid-template-columns: repeat(2, 1fr); 
@@ -173,7 +167,6 @@ canvas#rpmCanvas {
 .card-value{font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic; font-size:clamp(1.8rem,6vmin,3.5rem); line-height:0.9; text-shadow:2px 2px 5px rgba(0,0,0,0.8);}
 .card-unit{color:#888; font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic; font-size:clamp(0.75rem,1.5vw,1rem); margin-left:4px;}
 
-/* ─────────── ALL DATA page ─────────── */
 #page-data{align-items:stretch;}
 .data-grid{flex:1; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(4,1fr); gap:clamp(6px,1.2vw,12px); min-height:0; width: 100%;}
 .data-tile{
@@ -186,7 +179,6 @@ canvas#rpmCanvas {
 .data-tile .val{font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic; font-size:clamp(1.2rem,3.4vw,2.1rem); text-align:right; line-height:1;}
 .data-tile.link .val{font-size:clamp(1rem,2.6vw,1.5rem);}
 
-/* ─────────── DTC page ─────────── */
 #page-dtc{gap:clamp(8px,1.6vw,16px); width: 100%;}
 .dtc-btns{display:flex; flex-direction:row; gap:clamp(8px,1.6vw,16px); flex-shrink:0;}
 .dtc-btn{
@@ -205,7 +197,6 @@ canvas#rpmCanvas {
 .dtc-hex{font-family:'Rajdhani',monospace; font-size:clamp(0.75rem,1.6vw,1rem); color:var(--accent2); letter-spacing:1px; word-break:break-all; line-height:1.6;}
 .dtc-hex:empty::before{content:'—'; color:#555;}
 
-/* ─────────── SETTINGS page & Preview ─────────── */
 #page-set{overflow-y:auto; width: 100%;}
 .set-section{margin-bottom:clamp(14px,2.6vw,22px); width: 100%;}
 .set-title{font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic; letter-spacing:2px; font-size:clamp(0.8rem,1.8vw,1rem); color:#999; margin-bottom:8px;}
@@ -238,7 +229,6 @@ canvas#rpmCanvas {
 .mini-btn{flex:1; padding:10px; border-radius:4px; border:1px solid var(--frame); background:var(--panel); color:var(--text); font-family:'Rajdhani',sans-serif; font-weight:700; letter-spacing:1px; font-size:clamp(0.75rem,1.6vw,0.9rem); text-align:center; cursor:pointer;}
 .mini-btn.danger{color:var(--eot); border-color:rgba(255,59,48,0.5);}
 
-/* จุดไข่ปลาบอกหน้าปัจจุบัน */
 .page-indicators {
   position: absolute; bottom: calc(env(safe-area-inset-bottom) + 5px); left: 0; width: 100%; display: flex; justify-content: center; gap: 8px; z-index: 50; pointer-events: none;
 }
@@ -256,7 +246,6 @@ canvas#rpmCanvas {
 </div>
 
 <div id="pages">
-  <!-- DASHBOARD -->
   <div class="page active" id="page-dash">
     <div class="dash-screen" id="rpm-panel">
       <div class="dash-gauge-wrapper">
@@ -279,7 +268,6 @@ canvas#rpmCanvas {
     </div>
   </div>
 
-  <!-- ALL DATA -->
   <div class="page" id="page-data">
     <div class="data-grid">
       <div class="data-tile"><div class="lbl">RPM</div><div class="val" id="d-rpm">0</div></div>
@@ -296,7 +284,6 @@ canvas#rpmCanvas {
     </div>
   </div>
 
-  <!-- DTC -->
   <div class="page" id="page-dtc">
     <div class="dtc-btns">
       <div class="dtc-btn" id="btn-scan">SCAN DTC</div>
@@ -308,7 +295,6 @@ canvas#rpmCanvas {
     </div>
   </div>
 
-  <!-- SETTINGS -->
   <div class="page" id="page-set">
     <div class="set-section" style="text-align:center;">
       <div class="set-title" style="margin-bottom:12px;">LIVE PREVIEW</div>
@@ -340,7 +326,6 @@ canvas#rpmCanvas {
   </div>
 </div>
 
-<!-- จุดไข่ปลาบอกหน้าปัจจุบัน -->
 <div class="page-indicators" id="dots">
   <div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
 </div>
@@ -370,7 +355,6 @@ function switchPage(index) {
   }
 }
 
-// Swipe Gestures
 let touchStartX = 0;
 let touchEndX = 0;
 const swipeThreshold = 50; 
@@ -389,9 +373,9 @@ function handleSwipe() {
   if (Math.abs(diff) < swipeThreshold) return; 
 
   if (diff > 0) {
-    switchPage(currentPageIndex + 1); // ปัดซ้าย
+    switchPage(currentPageIndex + 1);
   } else {
-    switchPage(currentPageIndex - 1); // ปัดขวา
+    switchPage(currentPageIndex - 1);
   }
 }
 
@@ -411,9 +395,10 @@ const el = {
   dSpk: document.getElementById('d-spk'), dSpd: document.getElementById('d-spd'),
   dLink: document.getElementById('d-link')
 };
-function setText(node, txt){ if (node.__t !== txt) { node.__t = txt; node.textContent = txt; } }
 
-// ─────────── 6 STYLES GAUGE SYSTEM (AUTO RESIZE) ───────────
+function setText(node, txt){ if (node && node.__t !== txt) { node.__t = txt; node.textContent = txt; } }
+
+// ─────────── 6 STYLES GAUGE SYSTEM ───────────
 const canvas = document.getElementById('rpmCanvas'); 
 const ctx = canvas.getContext('2d');
 const prevCanvas = document.getElementById('previewCanvas');
@@ -426,8 +411,8 @@ let currentThemeAccent = '#00e5ff';
 
 let cvsW, cvsH, arcCx, arcCy, arcR, startAng, endAng, totalAng;
 let isPortrait = false;
+let animationRunning = false;
 
-// คำนวณขนาดและสัดส่วนใหม่เมื่อหมุนจอ
 function updateCanvasSize() {
   isPortrait = window.innerHeight > window.innerWidth;
   
@@ -444,8 +429,10 @@ function updateCanvasSize() {
   
   canvas.width = cvsW; canvas.height = cvsH;
   prevCanvas.width = cvsW; prevCanvas.height = cvsH;
-  drawGauge(currentRpm);
+  
+  if (ctx) drawGauge(currentRpm);
 }
+
 window.addEventListener('resize', updateCanvasSize);
 updateCanvasSize();
 
@@ -481,7 +468,7 @@ function drawSuperbikeArc(rpm) {
   }
 }
 
-/* 2. CYBER BAR (ปรับเป็นวงกลมล้ำๆ อัตโนมัติเมื่อแนวตั้ง) */
+/* 2. CYBER BAR */
 function drawCyberBar(rpm) {
   if (isPortrait) {
     let r = arcR;
@@ -585,9 +572,6 @@ function drawNeonPulse(rpm) {
   ctx.lineWidth = 30; ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.stroke();
 
   if (rpm > 0) {
-      let grad = ctx.createLinearGradient(arcCx + Math.cos(startAng)*r, arcCy + Math.sin(startAng)*r, arcCx + Math.cos(endAng)*r, arcCy + Math.sin(endAng)*r);
-      grad.addColorStop(0, currentThemeAccent); grad.addColorStop(1, rpm >= redline ? '#ff3b30' : currentThemeAccent);
-
       ctx.beginPath(); ctx.arc(arcCx, arcCy, r, startAng, fillAng);
       ctx.lineCap = "round"; ctx.lineWidth = 26; ctx.strokeStyle = rpm >= redline ? '#ff3b30' : currentThemeAccent;
       ctx.shadowBlur = 40; ctx.shadowColor = ctx.strokeStyle; ctx.stroke();
@@ -638,6 +622,8 @@ function drawMechaCore(rpm) {
 // ─────────── MASTER RENDERER ───────────
 let currentGaugeType = 'superbike'; 
 function drawGauge(rpm) {
+  if (!ctx) return;
+  
   ctx.clearRect(0,0,cvsW,cvsH);
   ctx.shadowBlur = 0;
   
@@ -649,25 +635,41 @@ function drawGauge(rpm) {
   else if (currentGaugeType === 'mecha') drawMechaCore(rpm);
 
   if(rpm>=redline){ 
-    rpmPanel.style.boxShadow="inset 0 0 80px rgba(255,0,0,0.5)"; rpmPanel.style.borderColor="rgba(255,0,0,0.8)"; 
+    rpmPanel.style.boxShadow="inset 0 0 80px rgba(255,0,0,0.5)"; 
+    rpmPanel.style.borderColor="rgba(255,0,0,0.8)"; 
   } else { 
-    rpmPanel.style.boxShadow="inset 0 0 40px rgba(0,0,0,0.9)"; rpmPanel.style.borderColor="var(--frame)"; 
+    rpmPanel.style.boxShadow="inset 0 0 40px rgba(0,0,0,0.9)"; 
+    rpmPanel.style.borderColor="var(--frame)"; 
   }
 
-  if (document.getElementById('page-set').classList.contains('active')) {
+  if (document.getElementById('page-set').classList.contains('active') && prevCtx) {
     prevCtx.clearRect(0, 0, prevCanvas.width, prevCanvas.height);
     prevCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, prevCanvas.width, prevCanvas.height);
   }
 }
 
-let lastFrame=performance.now();
+let lastFrame = performance.now();
 function animateGauge(now){
-  const dt=Math.min((now-lastFrame)/1000,0.05); lastFrame=now;
-  const k=1-Math.pow(0.0005,dt);
-  currentRpm += (targetRpm-currentRpm)*k;
+  if (!animationRunning) return;
+  
+  const dt = Math.min((now - lastFrame) / 1000, 0.05);
+  lastFrame = now;
+  
+  const k = 1 - Math.pow(0.0005, dt);
+  currentRpm += (targetRpm - currentRpm) * k;
+  
   drawGauge(currentRpm);
   setText(el.rpm, String(Math.round(currentRpm)));
+  
   requestAnimationFrame(animateGauge);
+}
+
+function startAnimation() {
+  if (!animationRunning) {
+    animationRunning = true;
+    lastFrame = performance.now();
+    requestAnimationFrame(animateGauge);
+  }
 }
 
 // ─────────── BLE ───────────
@@ -684,8 +686,17 @@ const statusBox=document.getElementById('status-box');
 const LAST_DEVICE_KEY='ecu_hud_last_ble_device_id';
 const GPS_ON_KEY='ecu_hud_gps_feed_on';
 
-function setStatus(text,color,connected){ statusBox.innerText=text; statusBox.style.color=color; statusBox.classList.toggle('connected', !!connected); }
-function hookDisconnectOnce(){ if(disconnectHooked||!bleDevice) return; bleDevice.addEventListener('gattserverdisconnected', onDisconnected); disconnectHooked=true; }
+function setStatus(text,color,connected){ 
+  statusBox.innerText=text; 
+  statusBox.style.color=color; 
+  statusBox.classList.toggle('connected', !!connected); 
+}
+
+function hookDisconnectOnce(){ 
+  if(disconnectHooked || !bleDevice) return; 
+  bleDevice.addEventListener('gattserverdisconnected', onDisconnected); 
+  disconnectHooked=true; 
+}
 
 async function connectGatt(){
   if (isConnecting || !bleDevice) throw new Error('busy');
@@ -702,6 +713,7 @@ async function connectGatt(){
     reconnectDelay=1000;
     localStorage.setItem(LAST_DEVICE_KEY, bleDevice.id);
     stopWatchingAdverts();
+    startAnimation();
 
     try { gpsChar = await service.getCharacteristic(BLE_CHAR_GPS_UUID); } catch(e){ gpsChar=null; }
     try {
@@ -719,18 +731,26 @@ async function connectGatt(){
 
 async function connectBLE(){
   if (!navigator.bluetooth){
-    setStatus('● BLE NOT SUPPORTED', '#ff3b30', false); alert('เบราว์เซอร์นี้ไม่รองรับ Web Bluetooth'); return;
+    setStatus('● BLE NOT SUPPORTED', '#ff3b30', false); 
+    alert('เบราว์เซอร์นี้ไม่รองรับ Web Bluetooth'); 
+    return;
   }
   try{
     setStatus('● SCANNING...', '#ffe066', false);
-    bleDevice = await navigator.bluetooth.requestDevice({ filters:[{ services:[BLE_SERVICE_UUID] }], optionalServices:[BLE_SERVICE_UUID] });
-    disconnectHooked=false; hookDisconnectOnce();
+    bleDevice = await navigator.bluetooth.requestDevice({ 
+      filters:[{ services:[BLE_SERVICE_UUID] }], 
+      optionalServices:[BLE_SERVICE_UUID] 
+    });
+    disconnectHooked=false; 
+    hookDisconnectOnce();
     await connectGatt();
-  } catch(err){ setStatus('● TAP TO CONNECT', '#ff3b30', false); }
+  } catch(err){ 
+    setStatus('● TAP TO CONNECT', '#ff3b30', false); 
+  }
 }
 
 async function tryAutoConnect(){
-  requestAnimationFrame(animateGauge);
+  startAnimation();
   if (!navigator.bluetooth || !navigator.bluetooth.getDevices) return;
   try{
     const knownDevices = await navigator.bluetooth.getDevices();
@@ -745,69 +765,99 @@ async function tryAutoConnect(){
 function watchForDevice(){
   if (!bleDevice || watchingAdverts || !bleDevice.watchAdvertisements) return;
   watchingAdverts=true;
-  const onAdvert=()=>{ bleDevice.removeEventListener('advertisementreceived', onAdvert); stopWatchingAdverts(); scheduleReconnect(0); };
+  const onAdvert=()=>{ 
+    if (bleDevice) bleDevice.removeEventListener('advertisementreceived', onAdvert); 
+    stopWatchingAdverts(); 
+    scheduleReconnect(0); 
+  };
   bleDevice.addEventListener('advertisementreceived', onAdvert);
   bleDevice.watchAdvertisements().catch(()=>{ watchingAdverts=false; });
 }
+
 function stopWatchingAdverts(){
   if (!watchingAdverts || !bleDevice) return;
   watchingAdverts=false;
   if (bleDevice.stopWatchingAdvertisements) bleDevice.stopWatchingAdvertisements().catch(()=>{});
 }
+
 function onDisconnected(){
   gpsChar=null; cmdChar=null; dtcChar=null;
-  setStatus('● LINK LOST - RECONNECTING...', '#ff3b30', false); scheduleReconnect(); watchForDevice();
+  setStatus('● LINK LOST - RECONNECTING...', '#ff3b30', false); 
+  scheduleReconnect(); 
+  watchForDevice();
 }
+
 function scheduleReconnect(delayMs){
   if (reconnectTimer || !bleDevice) return;
   reconnectTimer=setTimeout(async ()=>{
     reconnectTimer=null;
-    try{ await connectGatt(); } catch(err){ setStatus('● LINK LOST - RECONNECTING...', '#ff3b30', false); scheduleReconnect(reconnectDelay); reconnectDelay=Math.min(reconnectDelay*2,5000); }
+    try{ await connectGatt(); } catch(err){ 
+      setStatus('● LINK LOST - RECONNECTING...', '#ff3b30', false); 
+      scheduleReconnect(reconnectDelay); 
+      reconnectDelay=Math.min(reconnectDelay*2,5000); 
+    }
   }, delayMs!=null ? delayMs : reconnectDelay);
 }
+
 setInterval(()=>{
-  if (bleServer && bleServer.connected && Date.now()-lastPacketAt>2500) setStatus('● LINK OK - NO ECU DATA', '#ffe066', false);
+  if (bleServer && bleServer.connected && Date.now()-lastPacketAt>2500) {
+    setStatus('● LINK OK - NO ECU DATA', '#ffe066', false);
+  }
 }, 1000);
 
 function onDataReceived(event){
   const dv = event.target.value;
-  const rpm = dv.getUint16(0, true);
-  const tps = dv.getInt16(2, true)/10.0;
-  const afr = dv.getInt16(4, true)/10.0;
-  const eot = dv.getInt16(6, true);
-  const bat = dv.getInt16(8, true)/10.0;
+  if (dv.byteLength < 10) return;
+  
+  try {
+    const rpm = dv.getUint16(0, true);
+    const tps = dv.getInt16(2, true)/10.0;
+    const afr = dv.getInt16(4, true)/10.0;
+    const eot = dv.getInt16(6, true);
+    const bat = dv.getInt16(8, true)/10.0;
 
-  targetRpm = rpm; lastPacketAt = Date.now();
-  setText(el.tps, tps.toFixed(1)); setText(el.dTps, tps.toFixed(1));
-  setText(el.afr, afr.toFixed(1)); setText(el.dAfr, afr.toFixed(1));
-  setText(el.eot, String(eot));    setText(el.dEot, String(eot));
-  setText(el.bat, bat.toFixed(1)); setText(el.dBat, bat.toFixed(1));
-  setText(el.dRpm, String(rpm));
+    targetRpm = rpm; 
+    lastPacketAt = Date.now();
+    setText(el.tps, tps.toFixed(1)); 
+    setText(el.dTps, tps.toFixed(1));
+    setText(el.afr, afr.toFixed(1)); 
+    setText(el.dAfr, afr.toFixed(1));
+    setText(el.eot, String(eot));    
+    setText(el.dEot, String(eot));
+    setText(el.bat, bat.toFixed(1)); 
+    setText(el.dBat, bat.toFixed(1));
+    setText(el.dRpm, String(rpm));
 
-  if (dv.byteLength >= 13){
-    const kmh = dv.getUint16(10, true)/10.0;
-    const mode = dv.getUint8(12);
-    setText(el.spd, Math.round(kmh));
-    el.spdMode.className = 'spd-mode ' + (mode===2 ? 'gps' : (mode===1 ? 'est' : ''));
-    setText(el.spdMode, mode===2 ? 'GPS MODE' : (mode===1 ? 'EST MODE' : '--'));
-    setText(el.dSpd, String(Math.round(kmh)));
-  }
-  if (dv.byteLength >= 21){
-    const o2 = dv.getInt16(13, true)/100.0;
-    const stft = dv.getInt8(15);
-    const inj = dv.getUint16(16, true);
-    const spk = dv.getInt16(18, true)/10.0;
-    const linkOk = dv.getUint8(20);
-    setText(el.dO2, o2.toFixed(2));
-    setText(el.dStft, stft===-128 ? '--' : String(stft));
-    setText(el.dInj, String(inj));
-    setText(el.dSpk, Math.abs(spk).toFixed(1));
-    setText(el.dLink, linkOk ? 'OK' : 'NO');
-    el.dLink.style.color = linkOk ? 'var(--bat)' : 'var(--eot)';
+    if (dv.byteLength >= 13){
+      const kmh = dv.getUint16(10, true)/10.0;
+      const mode = dv.getUint8(12);
+      setText(el.spd, String(Math.round(kmh)));
+      el.spdMode.className = 'spd-mode ' + (mode===2 ? 'gps' : (mode===1 ? 'est' : ''));
+      setText(el.spdMode, mode===2 ? 'GPS MODE' : (mode===1 ? 'EST MODE' : '--'));
+      setText(el.dSpd, String(Math.round(kmh)));
+    }
+    if (dv.byteLength >= 21){
+      const o2 = dv.getInt16(13, true)/100.0;
+      const stft = dv.getInt8(15);
+      const inj = dv.getUint16(16, true);
+      const spk = dv.getInt16(18, true)/10.0;
+      const linkOk = dv.getUint8(20);
+      setText(el.dO2, o2.toFixed(2));
+      setText(el.dStft, stft===-128 ? '--' : String(stft));
+      setText(el.dInj, String(inj));
+      setText(el.dSpk, Math.abs(spk).toFixed(1));
+      setText(el.dLink, linkOk ? 'OK' : 'NO');
+      el.dLink.style.color = linkOk ? 'var(--bat)' : 'var(--eot)';
+    }
+  } catch(e) {
+    console.error('Data parse error:', e);
   }
 }
 
-statusBox.addEventListener('click', (e)=>{ e.stopPropagation(); if (!statusBox.classList.contains('connected')) connectBLE(); });
+statusBox.addEventListener('click', (e)=>{ 
+  e.stopPropagation(); 
+  if (!statusBox.classList.contains('connected')) connectBLE(); 
+});
 
 // ─────────── DTC page ───────────
 const dtcStatusEl = document.getElementById('dtc-status');
@@ -817,9 +867,12 @@ const btnClear = document.getElementById('btn-clear');
 let clearArmed=false, clearArmTimer=null;
 
 function setDtcStatus(text, kind){
-  dtcStatusEl.textContent = text;
-  dtcStatusEl.className = 'dtc-status' + (kind ? ' '+kind : '');
+  if (dtcStatusEl) {
+    dtcStatusEl.textContent = text;
+    dtcStatusEl.className = 'dtc-status' + (kind ? ' '+kind : '');
+  }
 }
+
 async function sendCmd(byte){
   if (!cmdChar){ setDtcStatus('NO DTC LINK (flash v1.3.0)', 'err'); return; }
   const buf = new Uint8Array([byte]);
@@ -828,36 +881,63 @@ async function sendCmd(byte){
     else await cmdChar.writeValue(buf);
   } catch(e){ setDtcStatus('SEND FAILED', 'err'); }
 }
+
 btnScan.addEventListener('click', (e)=>{
   e.stopPropagation();
   if (!bleServer || !bleServer.connected){ setDtcStatus('NOT CONNECTED', 'err'); return; }
-  setDtcStatus('SCANNING...', 'warn'); dtcHexEl.textContent='';
+  setDtcStatus('SCANNING...', 'warn'); 
+  if (dtcHexEl) dtcHexEl.textContent='';
   sendCmd(1);
 });
+
 btnClear.addEventListener('click', (e)=>{
   e.stopPropagation();
   if (!bleServer || !bleServer.connected){ setDtcStatus('NOT CONNECTED', 'err'); return; }
   if (!clearArmed){
-    clearArmed=true; btnClear.textContent='SURE? TAP AGAIN'; btnClear.classList.add('armed');
-    clearArmTimer = setTimeout(()=>{ clearArmed=false; btnClear.textContent='CLEAR DTC'; btnClear.classList.remove('armed'); }, 3000);
+    clearArmed=true; 
+    btnClear.textContent='SURE? TAP AGAIN'; 
+    btnClear.classList.add('armed');
+    clearArmTimer = setTimeout(()=>{ 
+      clearArmed=false; 
+      btnClear.textContent='CLEAR DTC'; 
+      btnClear.classList.remove('armed'); 
+    }, 3000);
   } else {
-    clearTimeout(clearArmTimer); clearArmed=false; btnClear.textContent='CLEAR DTC'; btnClear.classList.remove('armed');
-    setDtcStatus('CLEARING...', 'warn'); dtcHexEl.textContent='';
+    clearTimeout(clearArmTimer); 
+    clearArmed=false; 
+    btnClear.textContent='CLEAR DTC'; 
+    btnClear.classList.remove('armed');
+    setDtcStatus('CLEARING...', 'warn'); 
+    if (dtcHexEl) dtcHexEl.textContent='';
     sendCmd(2);
   }
 });
+
 function onDtcReceived(event){
   const dv = event.target.value;
-  let off = 0; const slen = dv.getUint8(off); off += 1;
-  let status = ''; for (let i=0;i<slen;i++) status += String.fromCharCode(dv.getUint8(off+i)); off += slen;
-  const dlen = dv.getUint8(off); off += 1;
-  let hexParts = []; for (let i=0;i<dlen;i++) hexParts.push(dv.getUint8(off+i).toString(16).padStart(2,'0').toUpperCase());
-  dtcHexEl.textContent = hexParts.join(' ');
-  let kind = 'ok';
-  if (/NO DTC|CLEARED|READY/.test(status)) kind='ok';
-  else if (/SCANNING|CLEARING|CONNECTING/.test(status)) kind='warn';
-  else if (/FOUND|TIMEOUT|NO CONNECT|NO REPLY/.test(status)) kind = /FOUND/.test(status) ? 'warn' : 'err';
-  setDtcStatus(status, kind);
+  if (dv.byteLength < 2) return;
+  
+  try {
+    let off = 0; 
+    const slen = dv.getUint8(off); 
+    off += 1;
+    let status = ''; 
+    for (let i=0;i<slen;i++) status += String.fromCharCode(dv.getUint8(off+i)); 
+    off += slen;
+    const dlen = dv.getUint8(off); 
+    off += 1;
+    let hexParts = []; 
+    for (let i=0;i<dlen;i++) hexParts.push(dv.getUint8(off+i).toString(16).padStart(2,'0').toUpperCase());
+    if (dtcHexEl) dtcHexEl.textContent = hexParts.join(' ');
+    
+    let kind = 'ok';
+    if (/NO DTC|CLEARED|READY/.test(status)) kind='ok';
+    else if (/SCANNING|CLEARING|CONNECTING/.test(status)) kind='warn';
+    else if (/FOUND|TIMEOUT|NO CONNECT|NO REPLY/.test(status)) kind = /FOUND/.test(status) ? 'warn' : 'err';
+    setDtcStatus(status, kind);
+  } catch(e) {
+    console.error('DTC parse error:', e);
+  }
 }
 
 function triggerDemoSweep() {
@@ -877,6 +957,7 @@ const GAUGES = [
   { key:'mecha',     name:'MECHA CORE' }
 ];
 const GAUGE_KEY='ecu_hud_gauge';
+
 function applyGauge(key){
   currentGaugeType = GAUGES.find(x=>x.key===key) ? key : GAUGES[0].key;
   localStorage.setItem(GAUGE_KEY, currentGaugeType);
@@ -886,10 +967,13 @@ function applyGauge(key){
   });
   triggerDemoSweep(); 
 }
+
 const gaugeGrid = document.getElementById('gauge-grid');
 GAUGES.forEach(g=>{
   const sw = document.createElement('div');
-  sw.className='theme-swatch'; sw.dataset.key=g.key; sw.textContent=g.name;
+  sw.className='theme-swatch'; 
+  sw.dataset.key=g.key; 
+  sw.textContent=g.name;
   sw.addEventListener('click', (e)=>{ e.stopPropagation(); applyGauge(g.key); });
   gaugeGrid.appendChild(sw);
 });
@@ -904,12 +988,17 @@ const THEMES = [
   { key:'purple',  name:'SYNTHWAVE', bg:'#10001a', bgCheck:'#160024', panel:'rgba(30,10,40,0.9)', frame:'rgba(180,50,220,0.4)', text:'#ffffff', accent:'#d500f9', accent2:'#00e5ff' }
 ];
 const THEME_KEY='ecu_hud_theme';
+
 function applyTheme(key){
   const t = THEMES.find(x=>x.key===key) || THEMES[0];
   const root = document.documentElement.style;
-  root.setProperty('--bg', t.bg); root.setProperty('--bg-check', t.bgCheck);
-  root.setProperty('--panel', t.panel); root.setProperty('--frame', t.frame);
-  root.setProperty('--text', t.text); root.setProperty('--accent', t.accent); root.setProperty('--accent2', t.accent2);
+  root.setProperty('--bg', t.bg); 
+  root.setProperty('--bg-check', t.bgCheck);
+  root.setProperty('--panel', t.panel); 
+  root.setProperty('--frame', t.frame);
+  root.setProperty('--text', t.text); 
+  root.setProperty('--accent', t.accent); 
+  root.setProperty('--accent2', t.accent2);
   currentThemeAccent = t.accent;
   localStorage.setItem(THEME_KEY, key);
   document.querySelectorAll('#theme-grid .theme-swatch').forEach(s => {
@@ -918,10 +1007,13 @@ function applyTheme(key){
   });
   applyGauge(currentGaugeType); 
 }
+
 const themeGrid = document.getElementById('theme-grid');
 THEMES.forEach(t=>{
   const sw = document.createElement('div');
-  sw.className='theme-swatch'; sw.dataset.key=t.key; sw.textContent=t.name;
+  sw.className='theme-swatch'; 
+  sw.dataset.key=t.key; 
+  sw.textContent=t.name;
   sw.addEventListener('click', (e)=>{ e.stopPropagation(); applyTheme(t.key); });
   themeGrid.appendChild(sw);
 });
@@ -933,23 +1025,33 @@ applyGauge(localStorage.getItem(GAUGE_KEY) || 'superbike');
 let wakeLock=null;
 const wakeSwitch=document.getElementById('wakelock-switch');
 const WAKE_KEY='ecu_hud_wakelock_on';
+
 async function enableWakeLock(){
   try{
     if ('wakeLock' in navigator){ wakeLock = await navigator.wakeLock.request('screen'); }
-    wakeSwitch.classList.add('on'); localStorage.setItem(WAKE_KEY,'1');
-  } catch(e){ wakeSwitch.classList.remove('on'); }
+    wakeSwitch.classList.add('on'); 
+    localStorage.setItem(WAKE_KEY,'1');
+  } catch(e){ 
+    wakeSwitch.classList.remove('on'); 
+  }
 }
+
 function disableWakeLock(){
   if (wakeLock) { wakeLock.release().catch(()=>{}); wakeLock=null; }
-  wakeSwitch.classList.remove('on'); localStorage.setItem(WAKE_KEY,'0');
+  wakeSwitch.classList.remove('on'); 
+  localStorage.setItem(WAKE_KEY,'0');
 }
+
 wakeSwitch.addEventListener('click', (e)=>{
   e.stopPropagation();
-  if (wakeSwitch.classList.contains('on')) disableWakeLock(); else enableWakeLock();
+  if (wakeSwitch.classList.contains('on')) disableWakeLock(); 
+  else enableWakeLock();
 });
+
 document.addEventListener('visibilitychange', async ()=>{
   if (document.visibilityState==='visible' && localStorage.getItem(WAKE_KEY)==='1' && !wakeLock) enableWakeLock();
 });
+
 if (localStorage.getItem(WAKE_KEY)==='1') enableWakeLock();
 
 // ─────────── Settings: connection buttons ───────────
@@ -957,8 +1059,10 @@ document.getElementById('btn-forget').addEventListener('click', async (e)=>{
   e.stopPropagation();
   localStorage.removeItem(LAST_DEVICE_KEY);
   if (bleDevice && bleDevice.forget) { try{ await bleDevice.forget(); }catch(err){} }
-  bleDevice=null; setStatus('● TAP TO CONNECT', '#ff3b30', false);
+  bleDevice=null; 
+  setStatus('● TAP TO CONNECT', '#ff3b30', false);
 });
+
 document.getElementById('btn-disconnect').addEventListener('click', (e)=>{
   e.stopPropagation();
   if (bleDevice && bleDevice.gatt && bleDevice.gatt.connected) bleDevice.gatt.disconnect();
@@ -972,49 +1076,90 @@ function setGpsStatus(text, sending){
   gpsBox.innerHTML = text + '<span class="sub">' + (sending?'TAP TO STOP':'TAP TO FEED SPEED') + '</span>';
   gpsBox.classList.toggle('sending', !!sending);
 }
+
 async function writeGpsSpeed(kmh){
   if (!gpsChar) return;
-  const buf = new ArrayBuffer(2); new DataView(buf).setInt16(0, Math.round(kmh*10), true);
+  const buf = new ArrayBuffer(2); 
+  new DataView(buf).setInt16(0, Math.round(kmh*10), true);
   try{
     if (gpsChar.properties.writeWithoutResponse) await gpsChar.writeValueWithoutResponse(buf);
     else await gpsChar.writeValue(buf);
     lastSentKmh = kmh;
   } catch(e){}
 }
+
 function haversineMeters(lat1,lon1,lat2,lon2){
-  const R=6371000; const toRad=d=>d*Math.PI/180; const dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1);
+  const R=6371000; 
+  const toRad=d=>d*Math.PI/180; 
+  const dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1);
   const a=Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
   return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
 }
+
 function onGpsPosition(pos){
   const { latitude, longitude, speed } = pos.coords;
   const nowTs = pos.timestamp || Date.now();
   let kmh=null;
-  if (typeof speed==='number' && !Number.isNaN(speed)) kmh=Math.max(0, speed*3.6);
-  else if (lastPos){
+  
+  if (typeof speed==='number' && !Number.isNaN(speed) && speed >= 0) {
+    kmh=Math.max(0, speed*3.6);
+  } else if (lastPos){
     const dt=(nowTs-lastPos.t)/1000;
-    if (dt>0.2 && dt<10){ const distM=haversineMeters(lastPos.lat,lastPos.lon,latitude,longitude); kmh=Math.max(0,(distM/dt)*3.6); }
+    if (dt>0.2 && dt<10){ 
+      const distM=haversineMeters(lastPos.lat,lastPos.lon,latitude,longitude); 
+      kmh=Math.max(0,(distM/dt)*3.6); 
+    }
   }
+  
   lastPos = { lat:latitude, lon:longitude, t:nowTs };
-  if (kmh==null){ setGpsStatus('● WAITING FIX...', gpsSending); return; }
+  
+  if (kmh==null){ 
+    setGpsStatus('● WAITING FIX...', gpsSending); 
+    return; 
+  }
+  
   setGpsStatus('● GPS '+Math.round(kmh)+' KM/H', gpsSending);
+  
   const now=Date.now();
   if (gpsSending && bleServer && bleServer.connected && (now-lastGpsWriteAt>400 || Math.abs(kmh-lastSentKmh)>=2)){
-    lastGpsWriteAt=now; writeGpsSpeed(kmh);
+    lastGpsWriteAt=now; 
+    writeGpsSpeed(kmh);
   }
 }
+
 function startGpsWatch(){
   if (!navigator.geolocation || gpsWatchId!=null) return;
-  gpsWatchId = navigator.geolocation.watchPosition(onGpsPosition, (err)=>{
-    setGpsStatus('● GPS ERROR: '+err.message, false); gpsSending=false; localStorage.setItem(GPS_ON_KEY,'0');
-  }, { enableHighAccuracy:true, maximumAge:1000, timeout:8000 });
+  gpsWatchId = navigator.geolocation.watchPosition(
+    onGpsPosition, 
+    (err)=>{
+      setGpsStatus('● GPS ERROR: '+err.message, false); 
+      gpsSending=false; 
+      localStorage.setItem(GPS_ON_KEY,'0');
+    }, 
+    { enableHighAccuracy:true, maximumAge:1000, timeout:8000 }
+  );
 }
-function stopGpsWatch(){ if (gpsWatchId!=null){ navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId=null; } lastPos=null; }
+
+function stopGpsWatch(){ 
+  if (gpsWatchId!=null){ 
+    navigator.geolocation.clearWatch(gpsWatchId); 
+    gpsWatchId=null; 
+  } 
+  lastPos=null; 
+}
+
 gpsBox.addEventListener('click', (e)=>{
   e.stopPropagation();
   if (!navigator.geolocation){ setGpsStatus('● NO GPS SUPPORT', false); return; }
-  gpsSending=!gpsSending; localStorage.setItem(GPS_ON_KEY, gpsSending?'1':'0');
-  if (gpsSending){ startGpsWatch(); setGpsStatus('● GPS ...', true); } else { stopGpsWatch(); setGpsStatus('● GPS OFF', false); }
+  gpsSending=!gpsSending; 
+  localStorage.setItem(GPS_ON_KEY, gpsSending?'1':'0');
+  if (gpsSending){ 
+    startGpsWatch(); 
+    setGpsStatus('● GPS ...', true); 
+  } else { 
+    stopGpsWatch(); 
+    setGpsStatus('● GPS OFF', false); 
+  }
 });
 
 window.addEventListener('load', tryAutoConnect);
