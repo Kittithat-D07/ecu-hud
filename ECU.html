@@ -77,12 +77,11 @@ body{
   padding: 10px; width: 100%;
 }
 
-/* ⚠️ แก้ไข CSS ส่วนเกจ์ให้รองรับเบราว์เซอร์เก่า 100% */
 .dash-gauge-wrapper {
   position: relative;
-  width: 100%; 
-  max-width: 500px;
+  width: 100%; height: 100%;
   margin: auto;
+  container-type: inline-size; 
 }
 
 canvas#rpmCanvas {
@@ -96,31 +95,29 @@ canvas#rpmCanvas {
   left: 0; width: 100%;
   z-index: 10; display: flex; flex-direction: column; align-items: center;
 }
-.dash-speed-wrap { display:flex; align-items:baseline; gap: 4px; justify-content:center; }
+.dash-speed-wrap { display:flex; align-items:baseline; gap: 1cqw; justify-content:center; }
 .dash-speed { 
   font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic; 
   color:#fff; line-height:0.8; text-shadow:0 0 20px rgba(255,255,255,0.2); letter-spacing:-4px;
 }
 .dash-speed-unit { font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic; color:#aaa; letter-spacing:2px; }
 .dash-rpm-val { font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic; color:var(--accent2); letter-spacing:1px; }
-.dash-rpm-unit { font-family:'Rajdhani',sans-serif; font-weight:700; color:#777; letter-spacing:4px; margin-left: 4px; }
+.dash-rpm-unit { font-family:'Rajdhani',sans-serif; font-weight:700; color:#777; letter-spacing:4px; margin-left: 1cqw; }
 .spd-mode { font-family:'Rajdhani',sans-serif; font-weight:700; color:#555; letter-spacing:2px; }
 .spd-mode.gps{color:#00e676; text-shadow:0 0 10px rgba(0,230,118,0.5);}
 .spd-mode.est{color:#ffe066; text-shadow:0 0 10px rgba(255,224,102,0.4);}
 
 @media screen and (orientation: portrait) {
-  .dash-gauge-wrapper { padding-bottom: 100%; /* Fallback 1:1 Ratio */ } 
-  @supports (aspect-ratio: 1 / 1) { .dash-gauge-wrapper { padding-bottom: 0; aspect-ratio: 1 / 1; } }
-  
+  .dash-gauge-wrapper { aspect-ratio: 1 / 1; max-width: 500px; height: auto;} 
   .dash-center-info { top: 50%; transform: translateY(-50%); } 
-  .dash-speed { font-size: clamp(3rem, 20vw, 6rem); }
-  .dash-speed-unit { font-size: clamp(0.8rem, 4vw, 1.2rem); }
-  .dash-rpm-val { font-size: clamp(1.2rem, 7vw, 2.5rem); margin-top: 5px; }
-  .dash-rpm-unit { font-size: clamp(0.6rem, 2.5vw, 0.9rem); }
-  .spd-mode { font-size: clamp(0.6rem, 2.5vw, 0.9rem); margin-top: 5px; }
+  
+  .dash-speed { font-size: 22cqw; }
+  .dash-speed-unit { font-size: 5cqw; }
+  .dash-rpm-val { font-size: 8cqw; margin-top: 1cqw; }
+  .dash-rpm-unit { font-size: 3cqw; }
+  .spd-mode { font-size: 3cqw; margin-top: 1cqw; }
 
-  #previewCanvas { width: 100%; max-width: 300px; aspect-ratio: 1 / 1; } 
-  @supports not (aspect-ratio: 1 / 1) { #previewCanvas { height: 300px; } }
+  #previewCanvas { aspect-ratio: 1 / 1; max-width: 250px; } 
 }
 
 @media screen and (orientation: landscape) {
@@ -128,20 +125,16 @@ canvas#rpmCanvas {
   .dash-screen { flex: 1.8; } 
   .dash-bottom-cards { flex: 1; height: 100%; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); }
   
-  .dash-gauge-wrapper { padding-bottom: 56%; max-width: 800px; }
-  @supports (aspect-ratio: 1000 / 560) {
-    .dash-gauge-wrapper { padding-bottom: 0; height: 100%; width: auto; aspect-ratio: 1000 / 560; max-width: 900px; }
-  }
+  .dash-gauge-wrapper { aspect-ratio: 1000 / 560; max-width: 900px; height: 100%; width: auto;} 
+  .dash-center-info { top: 18cqw; } 
+  
+  .dash-speed { font-size: 16cqw; }
+  .dash-speed-unit { font-size: 3.5cqw; }
+  .dash-rpm-val { font-size: 5cqw; margin-top: 2cqw; }
+  .dash-rpm-unit { font-size: 2.5cqw; }
+  .spd-mode { font-size: 2.5cqw; margin-top: 1cqw; }
 
-  .dash-center-info { top: 25%; } 
-  .dash-speed { font-size: clamp(3rem, 15vh, 8rem); }
-  .dash-speed-unit { font-size: clamp(0.8rem, 3.5vh, 1.5rem); }
-  .dash-rpm-val { font-size: clamp(1.2rem, 6vh, 2.5rem); margin-top: 10px; }
-  .dash-rpm-unit { font-size: clamp(0.6rem, 2.5vh, 1rem); }
-  .spd-mode { font-size: clamp(0.6rem, 2.5vh, 1rem); margin-top: 5px; }
-
-  #previewCanvas { width: 100%; max-width: 500px; aspect-ratio: 1000 / 560; } 
-  @supports not (aspect-ratio: 1000 / 560) { #previewCanvas { height: 250px; } }
+  #previewCanvas { aspect-ratio: 1000 / 560; max-width: 450px; } 
 }
 
 .dash-bottom-cards {
@@ -209,7 +202,7 @@ canvas#rpmCanvas {
 .set-title{font-family:'Rajdhani',sans-serif; font-weight:700; font-style:italic; letter-spacing:2px; font-size:clamp(0.8rem,1.8vw,1rem); color:#999; margin-bottom:8px;}
 
 #previewCanvas {
-  border-radius: 6px;
+  width: 100%; height: auto; border-radius: 6px;
   background: radial-gradient(circle at center top, rgba(30,30,30,0.4) 0%, var(--panel) 100%);
   border: 2px solid var(--frame); box-shadow: 0 0 20px rgba(0,0,0,0.8);
   margin: 0 auto 15px auto; display: block; object-fit: contain;
@@ -416,7 +409,7 @@ const el = {
 function setText(node, txt) { if (node && node.__t !== txt) { node.__t = txt; node.textContent = txt; } }
 
 // ═══════════════════════════════════════════════════════════
-// 🎯 GAUGE RENDERERS
+// 🎯 GAUGE RENDERERS (Original ECU HUD v3 Engine)
 // ═══════════════════════════════════════════════════════════
 const canvas = document.getElementById('rpmCanvas'); 
 const ctx = canvas.getContext('2d');
@@ -708,7 +701,7 @@ applyGauge(localStorage.getItem(GAUGE_KEY) || 'superbike');
 function triggerDemoSweep() { targetRpm = 11500; setTimeout(() => { targetRpm = 0; }, 800); }
 
 // ═══════════════════════════════════════════════════════════
-// 🎯 BLE & GPS LOGIC (Backend)
+// 🎯 BLE & GPS LOGIC (Backend from Source 2)
 // ═══════════════════════════════════════════════════════════
 const BLE_SERVICE_UUID = '8e2f1a10-52d3-4c3a-9f0e-1a2b3c4d5e6f';
 const BLE_CHAR_UUID    = '8e2f1a11-52d3-4c3a-9f0e-1a2b3c4d5e6f';
@@ -1009,13 +1002,10 @@ gpsBox.addEventListener('click', (e)=>{
   if (gpsSending){ startGpsWatch(); setGpsStatus('● GPS ...', true); } else { stopGpsWatch(); setGpsStatus('● GPS OFF', false); }
 });
 
-
-// 🚀 บังคับรัน Animation ทันที ไม่ต้องรอหน้าเว็บโหลดเสร็จ (กันบัค)
-startAnimation();
-
-// บังคับเชื่อมต่ออัตโนมัติ
-window.addEventListener('load', tryAutoConnect);
-
+window.addEventListener('load', () => {
+  startAnimation();
+  tryAutoConnect();
+});
 </script>
 </body>
 </html>
