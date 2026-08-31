@@ -38,12 +38,12 @@ body{
 .page.active{display:flex;flex-direction:column}
 
 #page-dash{flex-direction:row;gap:clamp(6px,1.2vw,12px)}
-.left-panel{flex:1.65;padding:2px;
-  background:radial-gradient(circle at center,rgba(0,229,255,.15) 0%,rgba(213,0,249,.05) 40%,rgba(10,10,12,.95) 70%);
-  border:1px solid var(--frame);border-radius:12px;display:flex;align-items:center;justify-content:center;
-  position:relative;box-shadow:inset 0 0 40px #000;backdrop-filter:blur(8px);
-  transition:box-shadow .2s,border-color .2s;min-width:0;min-height:0}
-canvas#rpmCanvas{width:100%;height:100%;max-width:min(94vh,68vw,900px);max-height:min(94vh,68vw,900px);aspect-ratio:1/1}
+.left-panel{flex:1.85;padding:2px;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;transition:box-shadow .2s;min-width:0;min-height:0;
+  border:2px solid transparent;border-radius:12px;box-shadow:none}
+canvas#rpmCanvas{display:block;width:min(96vh,76vw,1000px);height:auto;aspect-ratio:1/1;
+  max-width:100%;max-height:100%}
 .rpm-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:100%;pointer-events:none}
 .rpm-center .val{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:clamp(2.2rem,8vw,5rem);line-height:.9;
   text-shadow:0 0 15px rgba(0,229,255,.6);letter-spacing:-2px}
@@ -81,17 +81,31 @@ canvas#rpmCanvas{width:100%;height:100%;max-width:min(94vh,68vw,900px);max-heigh
 @media screen and (orientation:portrait){
   #page-dash{flex-direction:column}
   .left-panel{flex:1.5}
-  canvas#rpmCanvas{max-width:min(80vw,48vh,520px);max-height:min(80vw,48vh,520px)}
+  canvas#rpmCanvas{width:min(90vw,58vh,620px)}
 }
 
 .data-grid{flex:1;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(4,1fr);
   gap:clamp(6px,1.2vw,12px);min-height:0}
-.data-tile{background:var(--panel);border:1px solid var(--frame);border-radius:10px;
+.data-tile{position:relative;background-color:var(--panel);
+  background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.035) 0 2px,transparent 2px 14px);
+  border:1px solid var(--frame);border-radius:10px;
   padding:clamp(6px,1.2vw,10px) clamp(8px,1.5vw,14px);display:flex;flex-direction:column;
-  justify-content:space-between;min-width:0;min-height:0}
+  justify-content:space-between;min-width:0;min-height:0;overflow:hidden}
 .data-tile .lbl{font-size:clamp(.55rem,1.1vw,.72rem);letter-spacing:1px;color:#888;font-family:'Rajdhani';font-weight:700}
 .data-tile .val{font-family:'Rajdhani';font-weight:700;font-size:clamp(1.2rem,3.4vw,2.1rem);text-align:right;line-height:1}
 .data-tile.link .val{font-size:clamp(1rem,2.6vw,1.5rem)}
+.data-tile.dt-tps{border:1px solid rgba(255,152,0,.45);border-top:3px solid var(--tps);
+  box-shadow:0 0 14px rgba(255,152,0,.18)}
+.data-tile.dt-tps .lbl{color:var(--tps)}.data-tile.dt-tps .val{color:var(--tps);text-shadow:0 0 10px currentColor}
+.data-tile.dt-afr{border:1px solid rgba(0,229,255,.45);border-top:3px solid var(--afr);
+  box-shadow:0 0 14px rgba(0,229,255,.18)}
+.data-tile.dt-afr .lbl{color:var(--afr)}.data-tile.dt-afr .val{color:var(--afr);text-shadow:0 0 10px currentColor}
+.data-tile.dt-eot{border:1px solid rgba(255,59,48,.45);border-top:3px solid var(--eot);
+  box-shadow:0 0 14px rgba(255,59,48,.18)}
+.data-tile.dt-eot .lbl{color:var(--eot)}.data-tile.dt-eot .val{color:var(--eot);text-shadow:0 0 10px currentColor}
+.data-tile.dt-bat{border:1px solid rgba(0,230,118,.45);border-top:3px solid var(--bat);
+  box-shadow:0 0 14px rgba(0,230,118,.18)}
+.data-tile.dt-bat .lbl{color:var(--bat)}.data-tile.dt-bat .val{color:var(--bat);text-shadow:0 0 10px currentColor}
 
 #page-dtc{gap:clamp(8px,1.6vw,16px)}
 .dtc-btns{display:flex;gap:clamp(8px,1.6vw,16px);flex-shrink:0}
@@ -132,9 +146,6 @@ canvas#rpmCanvas{width:100%;height:100%;max-width:min(94vh,68vw,900px);max-heigh
   color:var(--text);font-family:'Rajdhani';font-weight:700;letter-spacing:1px;
   font-size:clamp(.75rem,1.6vw,.9rem);text-align:center;cursor:pointer}
 .mini-btn.danger{color:var(--eot);border-color:rgba(255,59,48,.5)}
-#previewCanvas{display:block;margin:0 auto 15px;border:1px solid var(--frame);border-radius:12px;
-  background:radial-gradient(circle at center,rgba(0,229,255,.12) 0%,rgba(10,10,12,.95) 70%);
-  width:100%;max-width:240px;aspect-ratio:1/1}
 .page-indicators{position:absolute;bottom:8px;left:0;width:100%;display:flex;justify-content:center;gap:10px;z-index:50}
 .dot{width:8px;height:8px;border-radius:50%;background:#444;transition:all .3s;cursor:pointer}
 .dot.active{background:var(--accent);transform:scale(1.35);box-shadow:0 0 8px var(--accent)}
@@ -172,10 +183,10 @@ canvas#rpmCanvas{width:100%;height:100%;max-width:min(94vh,68vw,900px);max-heigh
   <div class="page" id="page-data">
     <div class="data-grid">
       <div class="data-tile"><div class="lbl">RPM</div><div class="val" id="d-rpm">0</div></div>
-      <div class="data-tile"><div class="lbl">TPS (%)</div><div class="val" id="d-tps">0.0</div></div>
-      <div class="data-tile"><div class="lbl">EOT (°C)</div><div class="val" id="d-eot">0</div></div>
-      <div class="data-tile"><div class="lbl">BAT (V)</div><div class="val" id="d-bat">0.0</div></div>
-      <div class="data-tile"><div class="lbl">AFR</div><div class="val" id="d-afr">14.7</div></div>
+      <div class="data-tile dt-tps"><div class="lbl">TPS (%)</div><div class="val" id="d-tps">0.0</div></div>
+      <div class="data-tile dt-eot"><div class="lbl">EOT (°C)</div><div class="val" id="d-eot">0</div></div>
+      <div class="data-tile dt-bat"><div class="lbl">BAT (V)</div><div class="val" id="d-bat">0.0</div></div>
+      <div class="data-tile dt-afr"><div class="lbl">AFR</div><div class="val" id="d-afr">14.7</div></div>
       <div class="data-tile"><div class="lbl">O2 (V)</div><div class="val" id="d-o2">0.00</div></div>
       <div class="data-tile"><div class="lbl">STFT (%)</div><div class="val" id="d-stft">--</div></div>
       <div class="data-tile"><div class="lbl">INJ (ms)</div><div class="val" id="d-inj">0</div></div>
@@ -201,10 +212,6 @@ canvas#rpmCanvas{width:100%;height:100%;max-width:min(94vh,68vw,900px);max-heigh
 
   <!-- 3: SETTINGS -->
   <div class="page" id="page-set">
-    <div class="set-section" style="text-align:center">
-      <div class="set-title">LIVE PREVIEW</div>
-      <canvas id="previewCanvas"></canvas>
-    </div>
     <div class="set-section">
       <div class="set-title">GAUGE FACE (6 สไตล์)</div>
       <div class="theme-grid" id="gauge-grid"></div>
@@ -308,7 +315,6 @@ $('fs-btn').addEventListener('click',e=>{
 const D = 400, CX = 200, CY = 200, R = 160;
 const A0 = Math.PI*0.8, A1 = Math.PI*2.2, ASPAN = A1-A0;
 const cv  = $('rpmCanvas'),   ctx  = cv.getContext('2d');
-const pcv = $('previewCanvas'), pctx = pcv.getContext('2d');
 
 function fit(canvas, c){
   const dpr = Math.min(window.devicePixelRatio||1, 3);
@@ -318,7 +324,7 @@ function fit(canvas, c){
   const s = px/D;
   c.setTransform(s,0,0,s,0,0);
 }
-function resizeAll(){ fit(cv,ctx); fit(pcv,pctx); render(); }
+function resizeAll(){ fit(cv,ctx); render(); }
 window.addEventListener('resize',resizeAll);
 window.addEventListener('orientationchange',()=>setTimeout(resizeAll,250));
 
@@ -461,11 +467,10 @@ function paint(c,canvas,rpm){
 let targetRpm=0, curRpm=0, lastFrame=performance.now(), shiftFlash=false;
 function render(){
   paint(ctx,cv,curRpm);
-  if(pages[3].classList.contains('active')) paint(pctx,pcv,curRpm);
   const over = curRpm>=REDLINE;
   const on = over && (!shiftFlash || Math.floor(performance.now()/120)%2===0);
-  el.panel.style.boxShadow = on ? 'inset 0 0 60px rgba(255,0,0,.85)' : 'inset 0 0 40px #000';
-  el.panel.style.borderColor = on ? 'rgba(255,0,0,.85)' : 'var(--frame)';
+  el.panel.style.boxShadow = on ? 'inset 0 0 60px rgba(255,0,0,.85)' : 'none';
+  el.panel.style.borderColor = on ? 'rgba(255,0,0,.85)' : 'transparent';
 }
 function loop(now){
   const dt = Math.min((now-lastFrame)/1000, 0.05); lastFrame=now;
