@@ -38,41 +38,34 @@ body{
 .page.active{display:flex;flex-direction:column}
 
 #page-dash{flex-direction:row;gap:clamp(6px,1.2vw,12px)}
-.left-panel{flex:2.2;padding:2px;
+.left-panel{flex:2;padding:2px;
   display:flex;align-items:center;justify-content:center;
   position:relative;transition:box-shadow .2s;min-width:0;min-height:0;
   border:2px solid transparent;border-radius:12px;box-shadow:none}
 
-/* จัดการความสมส่วนของ Gauge */
+/* จัดการ Canvas ให้ใหญ่อย่างสมส่วนเสมอ */
 canvas#rpmCanvas{
   display:block;
-  margin: 0 auto;
+  width:100%;
+  max-width:78vh; /* แนวนอนยึดความสูงจอ เพื่อไม่ให้ล้นบนล่าง */
+  height:auto;
   aspect-ratio:1/1;
-  object-fit: contain;
+  margin:0 auto;
 }
-@media screen and (orientation: landscape) {
-  canvas#rpmCanvas {
-    height: 100%;
-    width: auto;
-    max-height: 85vh; /* ป้องกันไม่ให้ล้นจอแนวตั้ง */
-  }
-}
-@media screen and (orientation: portrait) {
-  #page-dash {flex-direction:column}
-  .left-panel {flex:1.2}
-  canvas#rpmCanvas {
-    width: 100%;
-    height: auto;
-    max-width: 90vw; /* ป้องกันไม่ให้ล้นจอแนวนอน */
+
+@media screen and (orientation:portrait){
+  #page-dash{flex-direction:column}
+  .left-panel{flex:1.2}
+  canvas#rpmCanvas{
+    max-width:88vw; /* แนวตั้งยึดความกว้างจอ */
   }
 }
 
 .rpm-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:100%;pointer-events:none}
-/* ตัวเลขใหญ่ขึ้น อิงตามขนาดด้านที่แคบสุด (vmin) */
-.rpm-center .val{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:clamp(4rem, 18vmin, 8rem);line-height:.85;
+.rpm-center .val{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:clamp(3rem, 14vmin, 6.5rem);line-height:0.9;
   text-shadow:0 0 15px rgba(0,229,255,.6);letter-spacing:-2px}
-.rpm-center .unit{font-size:clamp(1rem, 4vmin, 1.8rem);color:#aaa;font-weight:700;letter-spacing:4px;margin-top:2px}
-.rpm-center .spd{font-family:'Rajdhani',sans-serif;font-size:clamp(1.2rem, 5.5vmin, 2.5rem);font-weight:700;color:#555;letter-spacing:2px;margin-top:8px}
+.rpm-center .unit{font-size:clamp(0.9rem, 3.5vmin, 1.4rem);color:#aaa;font-weight:700;letter-spacing:4px;margin-top:0}
+.rpm-center .spd{font-family:'Rajdhani',sans-serif;font-size:clamp(1.1rem, 4.5vmin, 2.2rem);font-weight:700;color:#555;letter-spacing:2px;margin-top:4px}
 .rpm-center .spd.gps{color:#00e676;text-shadow:0 0 10px rgba(0,230,118,.5)}
 .rpm-center .spd.est{color:#ffe066;text-shadow:0 0 10px rgba(255,224,102,.4)}
 .gear-badge{position:absolute;top:10px;right:14px;font-family:'Rajdhani';font-weight:700;
@@ -89,7 +82,6 @@ canvas#rpmCanvas{
 .card-body{padding:clamp(4px,1vw,10px) clamp(8px,1.5vw,15px) clamp(6px,1.5vw,15px);display:flex;
   justify-content:space-between;align-items:flex-end;flex-grow:1}
 
-/* ขอบ Dashboard ปกติ (ไม่เปลี่ยนตาม Theme) */
 .card-tps{border:1px solid rgba(255,152,0,.45);border-top:3px solid var(--tps);box-shadow:inset 0 0 22px rgba(0,0,0,.85),0 0 18px rgba(255,152,0,.18)}
 .card-afr{border:1px solid rgba(0,229,255,.45);border-top:3px solid var(--afr);box-shadow:inset 0 0 22px rgba(0,0,0,.85),0 0 18px rgba(0,229,255,.18)}
 .card-eot{border:1px solid rgba(255,59,48,.45);border-top:3px solid var(--eot);box-shadow:inset 0 0 22px rgba(0,0,0,.85),0 0 18px rgba(255,59,48,.18)}
@@ -105,10 +97,10 @@ canvas#rpmCanvas{
 .data-grid{flex:1;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(4,1fr);
   gap:clamp(6px,1.2vw,12px);min-height:0}
   
-/* หน้า All Data: ขอบและสีกล่องอิงตาม Theme (--accent) ล้วนๆ */
+/* หน้า All Data: ขอบและเงาอิงตาม Theme (--accent) ล้วนๆ */
 .data-tile{position:relative;background-color:var(--panel);
   background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.035) 0 2px,transparent 2px 14px);
-  border:1px solid var(--accent); /* เป็นสีเดียวกันตาม Theme */
+  border:1px solid var(--accent);
   border-top:3px solid var(--accent);
   border-radius:10px;
   padding:clamp(6px,1.2vw,10px) clamp(8px,1.5vw,14px);display:flex;flex-direction:column;
@@ -118,7 +110,7 @@ canvas#rpmCanvas{
 .data-tile .val{font-family:'Rajdhani';font-weight:700;font-size:clamp(1.2rem,3.4vw,2.1rem);text-align:right;line-height:1}
 .data-tile.link .val{font-size:clamp(1rem,2.6vw,1.5rem)}
 
-/* สีตัวหนังสือแยกตามเซ็นเซอร์ (แต่ขอบเป็น Theme) */
+/* สีตัวหนังสือแยกตามเซ็นเซอร์เพื่อให้ดูง่าย */
 .data-tile.dt-tps .lbl{color:var(--tps)}.data-tile.dt-tps .val{color:var(--tps);text-shadow:0 0 10px currentColor}
 .data-tile.dt-afr .lbl{color:var(--afr)}.data-tile.dt-afr .val{color:var(--afr);text-shadow:0 0 10px currentColor}
 .data-tile.dt-eot .lbl{color:var(--eot)}.data-tile.dt-eot .val{color:var(--eot);text-shadow:0 0 10px currentColor}
@@ -325,7 +317,6 @@ $('fs-btn').addEventListener('click',e=>{
 });
 
 /* ══════════ CANVAS (DPR aware, 400x400 design space) ══════════ */
-/* ปรับรัศมีวงแหวนใหญ่ขึ้น (R=170) ใช้พื้นที่ขอบได้เต็มขึ้น */
 const D = 400, CX = 200, CY = 200, R = 170;
 const A0 = Math.PI*0.8, A1 = Math.PI*2.2, ASPAN = A1-A0;
 const cv  = $('rpmCanvas'),   ctx  = cv.getContext('2d');
@@ -353,9 +344,7 @@ const Z1 = 0.5;              // 0 → Z1 : เขียว
 const Z2 = REDLINE/MAX_RPM;  // Z1 → Z2 : ส้ม, Z2 → 1 : แดง (เรดไลน์)
 const COL_G = '#00e676', COL_O = '#ff9800', COL_R = '#ff3b30';
 const zoneColor = frac => frac>=Z2 ? COL_R : (frac>=Z1 ? COL_O : COL_G);
-const hot = rpm => zoneColor(ratio(rpm));
 
-/* วาดเข็ม/แถบเกจแบบไล่โซนสีตามค่า RPM ปัจจุบัน (เขียว→ส้ม→แดง) */
 function drawZonedArc(c,cx,cy,r,lw,rr,opt){
   opt = opt||{}; const cap = opt.cap||'butt';
   const stops = [[0,Z1,COL_G],[Z1,Z2,COL_O],[Z2,1,COL_R]];
