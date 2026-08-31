@@ -29,7 +29,6 @@ body{
 #status-box{font-size:clamp(.7rem,1.6vw,.95rem);color:#ff3b30;cursor:pointer;white-space:nowrap}
 #status-box.connected{cursor:default}
 #center-tools{display:flex;align-items:center;gap:10px;font-size:.65rem;color:#666;letter-spacing:1px}
-#fs-btn{cursor:pointer;border:1px solid var(--frame);border-radius:6px;padding:2px 7px;color:#aaa;font-size:.8rem}
 #gps-box{font-size:clamp(.7rem,1.6vw,.95rem);color:#666;cursor:pointer;text-align:right;white-space:nowrap}
 #gps-box.sending{color:var(--accent2)}
 #gps-box .sub{display:block;font-size:.6rem;color:#777;letter-spacing:1px;font-weight:500;margin-top:1px}
@@ -66,7 +65,6 @@ canvas#rpmCanvas{
 }
 
 .rpm-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:100%;pointer-events:none}
-/* เพิ่มขนาดตัวเลข vmin เพื่อให้สเกลสมบูรณ์กับตัว Gauge ที่ใหญ่ขึ้น */
 .rpm-center .val{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:clamp(3rem, 16vmin, 8.5rem);line-height:0.9;
   text-shadow:0 0 15px rgba(0,229,255,.6);letter-spacing:-2px}
 .rpm-center .unit{font-size:clamp(0.9rem, 4vmin, 1.6rem);color:#aaa;font-weight:700;letter-spacing:4px;margin-top:0}
@@ -167,7 +165,7 @@ canvas#rpmCanvas{
 
 <div id="topbar">
   <div id="status-box">● TAP TO CONNECT</div>
-  <div id="center-tools"><span>&lt;&lt; SWIPE &gt;&gt;</span><span id="fs-btn">⛶</span></div>
+  <div id="center-tools"><span>&lt;&lt; SWIPE &gt;&gt;</span></div>
   <div id="gps-box">● GPS OFF<span class="sub">TAP TO FEED SPEED</span></div>
 </div>
 
@@ -313,10 +311,19 @@ document.addEventListener('keydown',e=>{
   if(e.key==='ArrowRight') switchPage(pageIdx+1);
   if(e.key==='ArrowLeft')  switchPage(pageIdx-1);
 });
-$('fs-btn').addEventListener('click',e=>{
-  e.stopPropagation();
-  if(!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(()=>{});
-  else document.exitFullscreen?.().catch(()=>{});
+
+/* แตะตรงไหนก็ได้เพื่อเปิด/ปิด Fullscreen */
+document.body.addEventListener('click', e => {
+  const doc = document.documentElement;
+  // ใช้ Webkit/Moz Prefix เพื่อรองรับมือถือรุ่นเก่าๆ ให้มากที่สุด
+  const requestFS = doc.requestFullscreen || doc.webkitRequestFullscreen || doc.mozRequestFullScreen || doc.msRequestFullscreen;
+  const exitFS = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+  
+  if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement && !document.msFullscreenElement) {
+    requestFS?.call(doc).catch(()=>{});
+  } else {
+    exitFS?.call(document).catch(()=>{});
+  }
 });
 
 /* ══════════ CANVAS (DPR aware, 400x400 design space) ══════════ */
