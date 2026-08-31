@@ -21,7 +21,7 @@ body{
   color:var(--text);font-family:'Kanit',sans-serif;height:100dvh;width:100dvw;overflow:hidden;
   display:flex;flex-direction:column;
   padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-  transition: box-shadow 0.05s; /* ให้ไฟ Shift Light สมูทขึ้นนิดๆ */
+  transition: box-shadow 0.05s;
 }
 #topbar{display:flex;justify-content:space-between;align-items:center;gap:8px;
   padding:6px clamp(8px,2vw,16px);flex-shrink:0;z-index:20;
@@ -41,31 +41,36 @@ body{
 #page-dash{flex-direction:row;gap:clamp(6px,1.2vw,12px)}
 .left-panel{flex:2;padding:2px;
   display:flex;align-items:center;justify-content:center;
-  position:relative;min-width:0;min-height:0;} /* เอากรอบที่ซ่อนอยู่ออกไปทั้งหมดแล้ว */
+  position:relative;min-width:0;min-height:0;}
 
-/* จัดการ Canvas ให้ใหญ่อย่างสมส่วนเสมอ */
+/* ดัน Canvas ให้ใหญ่ที่สุดเท่าที่ความสูง Container จะรับได้ */
 canvas#rpmCanvas{
   display:block;
-  width:100%;
-  max-width:78vh;
-  height:auto;
-  aspect-ratio:1/1;
-  margin:0 auto;
+  height: 100%;      /* ขยายเต็มความสูงฝั่งซ้ายเสมอ */
+  max-height: 100%;  
+  width: auto;       /* ปล่อยความกว้างอิสระ */
+  max-width: 100%;   /* กันไม่ให้ล้นออกนอกจอ */
+  aspect-ratio: 1/1; /* บังคับให้เป็นทรงกลม 1:1 */
+  margin: 0 auto;
 }
 
 @media screen and (orientation:portrait){
   #page-dash{flex-direction:column}
   .left-panel{flex:1.2}
   canvas#rpmCanvas{
-    max-width:88vw;
+    height: auto;     /* คืนค่าเป็น auto สำหรับแนวตั้ง */
+    width: 100%;      /* ขยายเต็มความกว้างแทน */
+    max-width: 90vw;
+    max-height: 45vh; /* กันไม่ให้ทับกับ Card ด้านล่างในแนวตั้ง */
   }
 }
 
 .rpm-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:100%;pointer-events:none}
-.rpm-center .val{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:clamp(3rem, 14vmin, 6.5rem);line-height:0.9;
+/* เพิ่มขนาดตัวเลข vmin เพื่อให้สเกลสมบูรณ์กับตัว Gauge ที่ใหญ่ขึ้น */
+.rpm-center .val{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:clamp(3rem, 16vmin, 8.5rem);line-height:0.9;
   text-shadow:0 0 15px rgba(0,229,255,.6);letter-spacing:-2px}
-.rpm-center .unit{font-size:clamp(0.9rem, 3.5vmin, 1.4rem);color:#aaa;font-weight:700;letter-spacing:4px;margin-top:0}
-.rpm-center .spd{font-family:'Rajdhani',sans-serif;font-size:clamp(1.1rem, 4.5vmin, 2.2rem);font-weight:700;color:#555;letter-spacing:2px;margin-top:4px}
+.rpm-center .unit{font-size:clamp(0.9rem, 4vmin, 1.6rem);color:#aaa;font-weight:700;letter-spacing:4px;margin-top:0}
+.rpm-center .spd{font-family:'Rajdhani',sans-serif;font-size:clamp(1.1rem, 5.5vmin, 2.8rem);font-weight:700;color:#555;letter-spacing:2px;margin-top:4px}
 .rpm-center .spd.gps{color:#00e676;text-shadow:0 0 10px rgba(0,230,118,.5)}
 .rpm-center .spd.est{color:#ffe066;text-shadow:0 0 10px rgba(255,224,102,.4)}
 .gear-badge{position:absolute;top:10px;right:14px;font-family:'Rajdhani';font-weight:700;
@@ -471,7 +476,7 @@ function render(){
   const over = curRpm>=REDLINE;
   const on = over && (!shiftFlash || Math.floor(performance.now()/120)%2===0);
   
-  /* Shift Light คุมขอบจอทั้งหมด */
+  /* Shift Light คุมขอบหน้าจอทั้งหมด */
   document.body.style.boxShadow = on ? 'inset 0 0 0 6px rgba(255,0,0,0.9), inset 0 0 150px rgba(255,0,0,0.5)' : 'none';
 }
 function loop(now){
