@@ -38,29 +38,35 @@ body{
 .page.active{display:flex;flex-direction:column}
 
 #page-dash{flex-direction:row;gap:clamp(6px,1.2vw,12px)}
-.left-panel{flex:2;padding:2px;
-  display:flex;align-items:center;justify-content:center;
-  position:relative;min-width:0;min-height:0;}
 
-/* ดัน Canvas ให้ใหญ่ที่สุดเท่าที่ความสูง Container จะรับได้ */
-canvas#rpmCanvas{
-  display:block;
-  height: 100%;      /* ขยายเต็มความสูงฝั่งซ้ายเสมอ */
-  max-height: 100%;  
-  width: auto;       /* ปล่อยความกว้างอิสระ */
-  max-width: 100%;   /* กันไม่ให้ล้นออกนอกจอ */
-  aspect-ratio: 1/1; /* บังคับให้เป็นทรงกลม 1:1 */
-  margin: 0 auto;
+/* Landscape: left panel ใหญ่กว่า right panel */
+.left-panel{
+  flex:2.2;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;min-width:0;min-height:0;
+  overflow:hidden;
 }
 
+/* Canvas เต็มความสูง container เสมอ ทั้งแนวนอนและแนวตั้ง */
+canvas#rpmCanvas{
+  display:block;
+  width:100%;
+  height:100%;
+  max-width:100%;
+  max-height:100%;
+  aspect-ratio:1/1;
+  object-fit:contain;
+}
+
+/* แนวตั้ง: เปลี่ยน layout เป็น column, gauge ครึ่งบน, card ครึ่งล่าง */
 @media screen and (orientation:portrait){
   #page-dash{flex-direction:column}
-  .left-panel{flex:1.2}
+  .left-panel{flex:1.4;width:100%}
   canvas#rpmCanvas{
-    height: auto;     /* คืนค่าเป็น auto สำหรับแนวตั้ง */
-    width: 100%;      /* ขยายเต็มความกว้างแทน */
-    max-width: 90vw;
-    max-height: 45vh; /* กันไม่ให้ทับกับ Card ด้านล่างในแนวตั้ง */
+    width:auto;
+    height:100%;
+    max-height:100%;
+    max-width:90vw;
   }
 }
 
@@ -159,6 +165,26 @@ canvas#rpmCanvas{
 .page-indicators{position:absolute;bottom:8px;left:0;width:100%;display:flex;justify-content:center;gap:10px;z-index:50}
 .dot{width:8px;height:8px;border-radius:50%;background:#444;transition:all .3s;cursor:pointer}
 .dot.active{background:var(--accent);transform:scale(1.35);box-shadow:0 0 8px var(--accent)}
+
+/* ─── AFR MAP ─── */
+#page-afrmap{gap:6px}
+.afrmap-header{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:8px}
+.afrmap-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:clamp(.85rem,2vw,1.1rem);letter-spacing:2px;color:var(--accent)}
+.afrmap-info{font-family:'Rajdhani',sans-serif;font-size:clamp(.58rem,1.2vw,.75rem);color:#555;letter-spacing:1px}
+.afrmap-btns{display:flex;gap:6px;flex-shrink:0}
+.afrmap-btn{padding:3px 10px;border-radius:6px;border:1px solid var(--frame);background:var(--panel);color:#aaa;font-family:'Rajdhani';font-weight:700;font-size:clamp(.6rem,1.2vw,.75rem);letter-spacing:1px;cursor:pointer;white-space:nowrap;transition:.1s}
+.afrmap-btn:active{transform:scale(.96)}
+.afrmap-btn.danger{color:var(--eot);border-color:rgba(255,59,48,.5)}
+.afrmap-wrap{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch}
+.afrmap-table{border-collapse:collapse;width:100%;table-layout:fixed}
+.afrmap-table th,.afrmap-table td{border:1px solid rgba(255,255,255,.07);text-align:center;font-family:'Rajdhani',sans-serif;font-weight:700;padding:0;font-size:clamp(.48rem,1vw,.7rem)}
+.afrmap-table th{background:rgba(255,255,255,.05);color:#666;padding:3px 1px;position:sticky;top:0;z-index:2;white-space:nowrap}
+.afrmap-table th.rhdr,.afrmap-table td.rhdr{background:rgba(255,255,255,.04);color:#666;position:sticky;left:0;z-index:3;font-size:clamp(.44rem,.9vw,.64rem);padding:2px 3px;white-space:nowrap}
+.afrmap-table thead th.rhdr{z-index:4}
+.afrmap-cell{width:100%;height:100%;display:flex;align-items:center;justify-content:center;padding:clamp(4px,.9vw,9px) 1px;line-height:1;transition:background .3s,color .3s}
+.afrmap-cell.live{outline:2px solid #fff;outline-offset:-2px;position:relative;z-index:1}
+.afrmap-legend{display:flex;gap:5px;align-items:center;flex-shrink:0;flex-wrap:wrap;font-family:'Rajdhani',sans-serif;font-size:clamp(.52rem,1vw,.67rem);color:#555}
+.leg-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -220,7 +246,35 @@ canvas#rpmCanvas{
     </div>
   </div>
 
-  <!-- 3: SETTINGS -->
+  <!-- 3: AFR MAP -->
+  <div class="page" id="page-afrmap">
+    <div class="afrmap-header">
+      <div class="afrmap-title">⬡ AFR MAP</div>
+      <div class="afrmap-info" id="afrmap-info">SAMPLES: 0</div>
+      <div class="afrmap-btns">
+        <div class="afrmap-btn" id="btn-afrmap-export">CSV</div>
+        <div class="afrmap-btn danger" id="btn-afrmap-clear">CLEAR</div>
+      </div>
+    </div>
+    <div class="afrmap-wrap">
+      <table class="afrmap-table" id="afrmap-table">
+        <thead id="afrmap-thead"></thead>
+        <tbody id="afrmap-tbody"></tbody>
+      </table>
+    </div>
+    <div class="afrmap-legend">
+      <div class="leg-dot" style="background:#0077cc"></div><span>LEAN &gt;15.5</span>
+      <div class="leg-dot" style="background:#0099aa"></div><span>15.0–15.5</span>
+      <div class="leg-dot" style="background:#00875a"></div><span>14.5–15.0</span>
+      <div class="leg-dot" style="background:#1e8a00"></div><span>STOICH~14.7</span>
+      <div class="leg-dot" style="background:#8a6400"></div><span>13.5–14.5</span>
+      <div class="leg-dot" style="background:#c04000"></div><span>12.5–13.5</span>
+      <div class="leg-dot" style="background:#aa0000"></div><span>RICH &lt;12.5</span>
+      <div class="leg-dot" style="background:#222;border:1px solid #444"></div><span>NO DATA</span>
+    </div>
+  </div>
+
+  <!-- 4: SETTINGS (ท้ายสุด) -->
   <div class="page" id="page-set">
     <div class="set-section">
       <div class="set-title">GAUGE FACE (6 สไตล์)</div>
@@ -565,6 +619,8 @@ function updateAll(d){
     setText(el.dLink,d.link?'OK':'NO');
     el.dLink.style.color = d.link?'var(--bat)':'var(--eot)';
   }
+  // ── บันทึก AFR Map ──
+  afrMapRecord(targetRpm, d.tps, d.afr);
 }
 function resetDataToZero(){
   targetRpm=0;
@@ -831,13 +887,126 @@ el.gps.addEventListener('click',e=>{
   else { stopGps(); setGpsStatus('● GPS OFF',false); }
 });
 
+/* ══════════ AFR MAP ══════════ */
+// แกน X = TPS (คอลัมน์), แกน Y = RPM (แถว บน=สูง)
+const AFR_TPS_BINS = [0,10,20,30,40,50,60,70,80,90,100]; // 11 คอลัมน์
+const AFR_RPM_BINS = [1000,2000,3000,4000,5000,6000,7000,8000,9000,10000,11000,12000]; // 12 แถว
+const AFR_MAP_KEY  = 'ecu_afrmap_v2';
+
+// mapData[rpmIdx][tpsIdx] = {sum, count}
+let mapData = AFR_RPM_BINS.map(()=>AFR_TPS_BINS.map(()=>({sum:0,count:0})));
+let mapTotal = 0;
+let mapLiveCell = null;
+
+function afrMapLoad(){
+  try{
+    const raw = localStorage.getItem(AFR_MAP_KEY); if(!raw) return;
+    const saved = JSON.parse(raw); let tot=0;
+    AFR_RPM_BINS.forEach((_,ri)=>AFR_TPS_BINS.forEach((_,ci)=>{
+      const v=saved?.[ri]?.[ci]; if(v&&v.count>0){mapData[ri][ci]=v;tot+=v.count;}
+    }));
+    mapTotal=tot;
+  }catch(e){}
+}
+function afrMapSave(){
+  try{localStorage.setItem(AFR_MAP_KEY,JSON.stringify(mapData));}catch(e){}
+}
+function afrColor(afr){
+  if(afr>15.5) return {bg:'#0077cc',fg:'#fff'};
+  if(afr>15.0) return {bg:'#0099aa',fg:'#fff'};
+  if(afr>14.5) return {bg:'#00875a',fg:'#fff'};
+  if(afr>14.2) return {bg:'#1e8a00',fg:'#fff'};
+  if(afr>13.5) return {bg:'#4d6e00',fg:'#ddd'};
+  if(afr>12.5) return {bg:'#8a6400',fg:'#fff'};
+  if(afr>11.5) return {bg:'#c04000',fg:'#fff'};
+  return          {bg:'#aa0000',fg:'#ffa'};
+}
+function afrMapBuild(){
+  const thead=$('afrmap-thead'), tbody=$('afrmap-tbody');
+  thead.innerHTML=''; tbody.innerHTML='';
+  // header: RPM\TPS + TPS columns
+  const hr=document.createElement('tr');
+  const th0=document.createElement('th'); th0.className='rhdr';
+  th0.textContent='RPM\\TPS'; th0.style.fontSize='clamp(.38rem,.75vw,.58rem)';
+  hr.appendChild(th0);
+  AFR_TPS_BINS.forEach(tps=>{
+    const th=document.createElement('th'); th.textContent=tps+'%'; hr.appendChild(th);
+  });
+  thead.appendChild(hr);
+  // rows: RPM high→low
+  [...AFR_RPM_BINS].reverse().forEach(rpm=>{
+    const ri=AFR_RPM_BINS.indexOf(rpm);
+    const tr=document.createElement('tr');
+    const tdh=document.createElement('td'); tdh.className='rhdr';
+    tdh.textContent=(rpm>=10000?(rpm/1000).toFixed(0):(rpm/1000))+'k';
+    tr.appendChild(tdh);
+    AFR_TPS_BINS.forEach((_,ci)=>{
+      const td=document.createElement('td'); td.id=`amc-${ri}-${ci}`;
+      const div=document.createElement('div'); div.className='afrmap-cell'; div.textContent='—';
+      td.appendChild(div); tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  afrMapRenderAll();
+}
+function afrMapRenderCell(ri,ci){
+  const cell=$(`amc-${ri}-${ci}`); if(!cell) return;
+  const div=cell.querySelector('.afrmap-cell'), d=mapData[ri][ci];
+  if(d.count===0){div.style.background='';div.style.color='#333';div.textContent='—';return;}
+  const avg=d.sum/d.count, {bg,fg}=afrColor(avg);
+  div.style.background=bg; div.style.color=fg;
+  div.textContent=avg.toFixed(1)+(d.count>=5?'':'·');
+}
+function afrMapRenderAll(){
+  AFR_RPM_BINS.forEach((_,ri)=>AFR_TPS_BINS.forEach((_,ci)=>afrMapRenderCell(ri,ci)));
+  const info=$('afrmap-info'); if(info) info.textContent='SAMPLES: '+mapTotal;
+}
+function rpmBin(rpm){ let i=0; for(;i<AFR_RPM_BINS.length-1;i++) if(rpm<AFR_RPM_BINS[i+1]) break; return i; }
+function tpsBin(tps){ let i=0; for(;i<AFR_TPS_BINS.length-1;i++) if(tps<AFR_TPS_BINS[i+1]) break; return i; }
+
+let mapSaveT=0;
+function afrMapRecord(rpm,tps,afr){
+  if(rpm<800||afr<5||afr>25) return;
+  const ri=rpmBin(rpm), ci=tpsBin(tps), d=mapData[ri][ci];
+  d.sum+=afr; d.count++; mapTotal++;
+  if(mapLiveCell){
+    const p=$(`amc-${mapLiveCell.ri}-${mapLiveCell.ci}`);
+    if(p) p.querySelector('.afrmap-cell')?.classList.remove('live');
+  }
+  mapLiveCell={ri,ci};
+  const cur=$(`amc-${ri}-${ci}`);
+  if(cur) cur.querySelector('.afrmap-cell')?.classList.add('live');
+  afrMapRenderCell(ri,ci);
+  const info=$('afrmap-info'); if(info) info.textContent='SAMPLES: '+mapTotal;
+  const now=Date.now(); if(now-mapSaveT>5000){mapSaveT=now;afrMapSave();}
+}
+$('btn-afrmap-clear').addEventListener('click',e=>{
+  e.stopPropagation();
+  if(!confirm('ล้างข้อมูล AFR Map ทั้งหมด?')) return;
+  mapData=AFR_RPM_BINS.map(()=>AFR_TPS_BINS.map(()=>({sum:0,count:0})));
+  mapTotal=0; mapLiveCell=null; localStorage.removeItem(AFR_MAP_KEY); afrMapRenderAll();
+});
+$('btn-afrmap-export').addEventListener('click',e=>{
+  e.stopPropagation();
+  let csv='RPM\\TPS,'+AFR_TPS_BINS.join(',')+'\n';
+  [...AFR_RPM_BINS].reverse().forEach(rpm=>{
+    const ri=AFR_RPM_BINS.indexOf(rpm);
+    csv+=[(rpm/1000)+'k',...AFR_TPS_BINS.map((_,ci)=>{const d=mapData[ri][ci];return d.count>0?(d.sum/d.count).toFixed(2):''})].join(',')+'\n';
+  });
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='afr_map_'+new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')+'.csv';
+  a.click();
+});
+
 /* ══════════ BOOT ══════════ */
 function boot(){
   applyTheme(LS.get(K.theme,'carbon'));
   applyGauge(LS.get(K.gauge,'superbike'),false);
   shiftFlash = LS.get(K.shift,'1')==='1';
   resetDataToZero();
-  
+  afrMapLoad();
+  afrMapBuild();
   if(LS.get(K.wake)==='1') wakeOn($('wakelock-switch'));
   resizeAll();
   lastFrame = performance.now();
