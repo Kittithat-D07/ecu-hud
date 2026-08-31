@@ -32,41 +32,61 @@ body{
 #gps-box{font-size:clamp(.7rem,1.6vw,.95rem);color:#666;cursor:pointer;text-align:right;white-space:nowrap}
 #gps-box.sending{color:var(--accent2)}
 #gps-box .sub{display:block;font-size:.6rem;color:#777;letter-spacing:1px;font-weight:500;margin-top:1px}
+/* ในแนวนอน ให้ topbar เล็กลง */
+@media screen and (orientation:landscape){
+  #topbar{padding:2px clamp(8px,2vw,16px)}
+  #gps-box .sub{display:none}
+}
 
 #pages{flex:1;min-height:0;position:relative}
 .page{position:absolute;inset:0;display:none;padding:4px clamp(8px,2vw,16px) 22px}
 .page.active{display:flex;flex-direction:column}
+/* แนวนอน: ลด padding ล่างให้เหลือน้อยที่สุด */
+@media screen and (orientation:landscape){
+  .page{padding-bottom:10px}
+}
 
-#page-dash{flex-direction:row;gap:clamp(6px,1.2vw,12px)}
+#page-dash{flex-direction:row;gap:clamp(4px,1vw,10px)}
 
-/* Landscape: left panel ใหญ่กว่า right panel */
+/* ── Left panel: ใหญ่ในแนวนอน ── */
 .left-panel{
-  flex:2.2;
+  flex:2.8;
   display:flex;align-items:center;justify-content:center;
   position:relative;min-width:0;min-height:0;
   overflow:hidden;
 }
 
-/* Canvas เต็มความสูง container เสมอ ทั้งแนวนอนและแนวตั้ง */
+/* ── Canvas: แนวนอน = เต็มความสูงก่อน ── */
 canvas#rpmCanvas{
   display:block;
-  width:100%;
-  height:100%;
-  max-width:100%;
-  max-height:100%;
+  height:100%;          /* เต็มความสูง container */
+  width:auto;           /* ความกว้างตาม aspect ratio */
+  max-width:100%;       /* ห้ามล้น container */
   aspect-ratio:1/1;
-  object-fit:contain;
 }
 
-/* แนวตั้ง: เปลี่ยน layout เป็น column, gauge ครึ่งบน, card ครึ่งล่าง */
+/* ── Right panel: compact ในแนวนอน ── */
+.right-panel{
+  flex:1;min-width:0;min-height:0;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  grid-template-rows:1fr 1fr;
+  gap:clamp(4px,1vw,10px);
+}
+
+/* ── แนวตั้ง: column layout ── */
 @media screen and (orientation:portrait){
-  #page-dash{flex-direction:column}
-  .left-panel{flex:1.4;width:100%}
+  #page-dash{flex-direction:column;gap:clamp(6px,1.5vw,12px)}
+  .left-panel{flex:1.5;width:100%;min-height:0}
   canvas#rpmCanvas{
-    width:auto;
     height:100%;
-    max-height:100%;
-    max-width:90vw;
+    width:auto;
+    max-width:min(90vw,60vh);
+  }
+  .right-panel{
+    flex:1;
+    grid-template-columns:1fr 1fr;
+    grid-template-rows:1fr 1fr;
   }
 }
 
@@ -167,24 +187,35 @@ canvas#rpmCanvas{
 .dot.active{background:var(--accent);transform:scale(1.35);box-shadow:0 0 8px var(--accent)}
 
 /* ─── AFR MAP ─── */
-#page-afrmap{gap:6px}
-.afrmap-header{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:8px}
-.afrmap-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:clamp(.85rem,2vw,1.1rem);letter-spacing:2px;color:var(--accent)}
-.afrmap-info{font-family:'Rajdhani',sans-serif;font-size:clamp(.58rem,1.2vw,.75rem);color:#555;letter-spacing:1px}
+#page-afrmap{gap:4px;padding:4px clamp(6px,1.5vw,12px) 14px}
+.afrmap-header{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:8px;padding-bottom:2px}
+.afrmap-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:clamp(.9rem,2.2vw,1.2rem);letter-spacing:3px;color:var(--accent)}
 .afrmap-btns{display:flex;gap:6px;flex-shrink:0}
-.afrmap-btn{padding:3px 10px;border-radius:6px;border:1px solid var(--frame);background:var(--panel);color:#aaa;font-family:'Rajdhani';font-weight:700;font-size:clamp(.6rem,1.2vw,.75rem);letter-spacing:1px;cursor:pointer;white-space:nowrap;transition:.1s}
+.afrmap-btn{padding:3px 12px;border-radius:6px;border:1px solid var(--frame);background:var(--panel);color:#aaa;font-family:'Rajdhani';font-weight:700;font-size:clamp(.65rem,1.4vw,.8rem);letter-spacing:1px;cursor:pointer;white-space:nowrap;transition:.1s}
 .afrmap-btn:active{transform:scale(.96)}
-.afrmap-btn.danger{color:var(--eot);border-color:rgba(255,59,48,.5)}
+.afrmap-btn.danger{color:var(--eot);border-color:rgba(255,59,48,.4)}
 .afrmap-wrap{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch}
-.afrmap-table{border-collapse:collapse;width:100%;table-layout:fixed}
-.afrmap-table th,.afrmap-table td{border:1px solid rgba(255,255,255,.07);text-align:center;font-family:'Rajdhani',sans-serif;font-weight:700;padding:0;font-size:clamp(.48rem,1vw,.7rem)}
-.afrmap-table th{background:rgba(255,255,255,.05);color:#666;padding:3px 1px;position:sticky;top:0;z-index:2;white-space:nowrap}
-.afrmap-table th.rhdr,.afrmap-table td.rhdr{background:rgba(255,255,255,.04);color:#666;position:sticky;left:0;z-index:3;font-size:clamp(.44rem,.9vw,.64rem);padding:2px 3px;white-space:nowrap}
+.afrmap-table{border-collapse:collapse;width:100%;height:100%;table-layout:fixed}
+.afrmap-table th,.afrmap-table td{
+  border:1px solid rgba(255,255,255,.06);
+  text-align:center;font-family:'Rajdhani',sans-serif;font-weight:700;padding:0;
+  font-size:clamp(.52rem,1.1vw,.74rem)}
+.afrmap-table th{
+  background:rgba(255,255,255,.05);color:#555;
+  padding:3px 1px;position:sticky;top:0;z-index:2;white-space:nowrap;
+  font-size:clamp(.48rem,1vw,.68rem)}
+.afrmap-table th.rhdr,.afrmap-table td.rhdr{
+  background:rgba(255,255,255,.04);color:#555;
+  position:sticky;left:0;z-index:3;
+  font-size:clamp(.44rem,.95vw,.64rem);padding:0 3px;white-space:nowrap}
 .afrmap-table thead th.rhdr{z-index:4}
-.afrmap-cell{width:100%;height:100%;display:flex;align-items:center;justify-content:center;padding:clamp(4px,.9vw,9px) 1px;line-height:1;transition:background .3s,color .3s}
-.afrmap-cell.live{outline:2px solid #fff;outline-offset:-2px;position:relative;z-index:1}
-.afrmap-legend{display:flex;gap:5px;align-items:center;flex-shrink:0;flex-wrap:wrap;font-family:'Rajdhani',sans-serif;font-size:clamp(.52rem,1vw,.67rem);color:#555}
-.leg-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+.afrmap-cell{
+  width:100%;height:100%;
+  display:flex;align-items:center;justify-content:center;
+  padding:clamp(5px,1.1vw,11px) 1px;
+  line-height:1;font-size:clamp(.54rem,1.15vw,.76rem);
+  transition:background .25s,color .25s}
+.afrmap-cell.live{outline:2px solid rgba(255,255,255,.8);outline-offset:-2px;position:relative;z-index:1}
 </style>
 </head>
 <body>
@@ -249,8 +280,7 @@ canvas#rpmCanvas{
   <!-- 3: AFR MAP -->
   <div class="page" id="page-afrmap">
     <div class="afrmap-header">
-      <div class="afrmap-title">⬡ AFR MAP</div>
-      <div class="afrmap-info" id="afrmap-info">SAMPLES: 0</div>
+      <div class="afrmap-title">AFR MAP</div>
       <div class="afrmap-btns">
         <div class="afrmap-btn" id="btn-afrmap-export">CSV</div>
         <div class="afrmap-btn danger" id="btn-afrmap-clear">CLEAR</div>
@@ -261,16 +291,6 @@ canvas#rpmCanvas{
         <thead id="afrmap-thead"></thead>
         <tbody id="afrmap-tbody"></tbody>
       </table>
-    </div>
-    <div class="afrmap-legend">
-      <div class="leg-dot" style="background:#0077cc"></div><span>LEAN &gt;15.5</span>
-      <div class="leg-dot" style="background:#0099aa"></div><span>15.0–15.5</span>
-      <div class="leg-dot" style="background:#00875a"></div><span>14.5–15.0</span>
-      <div class="leg-dot" style="background:#1e8a00"></div><span>STOICH~14.7</span>
-      <div class="leg-dot" style="background:#8a6400"></div><span>13.5–14.5</span>
-      <div class="leg-dot" style="background:#c04000"></div><span>12.5–13.5</span>
-      <div class="leg-dot" style="background:#aa0000"></div><span>RICH &lt;12.5</span>
-      <div class="leg-dot" style="background:#222;border:1px solid #444"></div><span>NO DATA</span>
     </div>
   </div>
 
